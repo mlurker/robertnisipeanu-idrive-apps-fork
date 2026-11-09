@@ -179,7 +179,7 @@ INFERRED: GeniviAdapter and nv_md use the navi users. No binary passes 801.
 
 ### Recommendation for our producer: `enableSomeIPCommunication(801)`
 
-- **VERIFIED: HU stack.** In an emulator of the unit, user 1 fails in the MGU lib with "compiled without useSomeIP_IC" and then crashes, so IC-stack users (1, 101–110, 401–404, 802, 803, 901) are out.
+- **VERIFIED: HU stack.** On a test unit, user 1 fails in the MGU lib with "compiled without useSomeIP_IC" and then crashes, so IC-stack users (1, 101–110, 401–404, 802, 803, 901) are out.
 - **VERIFIED: the real lib accepts 801:** "Starting Ramses Client Application: …_MGUTestUserConnectingToAll", "Use SomeIPConnectionSystemHU", in the smoke run with `--someip 801`, no connect.
 - **VERIFIED: its own instances are unique.** SR3, SP4, RC5, RP5 and PI5 belong to no other participant, so they do not collide with HU_HMI (HmiMain3D), SUA or the navi users.
 - **VERIFIED: every one of its instances is in `vsomeip_gen.json`:**
@@ -242,6 +242,6 @@ Upstream 25.0.0 is the same API family: enums with string tables have identical 
 
 - **Renderer events.** `RamsesRenderer::dispatchEvents(IRendererEventHandler&)` and `RamsesClient::dispatchEvents(IClientEventHandler&)` are not declared: their vtable order is not checked. A renderer built on these headers has to retry `subscribeScene`/`mapScene`/`showScene` instead of waiting for events. INFERRED: undispatched events queue up.
 - **Not exercised:** `RamsesRenderer::createDisplay` and `doOneLoop`/`startThread`. There is no GPU or Wayland compositor in the test container.
-- **Not exercised by the smoke test:** `RamsesFramework::connect` over SOME/IP, which needs the unit's routing manager. Over TCP it runs in `make test-ramses`, and over SOME/IP in an emulator of the unit (participants 5 and 801).
+- **Not exercised by the smoke test:** `RamsesFramework::connect` over SOME/IP, which needs the unit's routing manager. Over TCP it runs in `make test-ramses`, and over SOME/IP on a test unit (participants 5 and 801).
 - **Undeclared:** `AttributeInput::getDataType`, and the values of `ERamsesObjectType` and `EEffectInputDataType` (learned at run time, above).
 - **`make test-ramses` for scene files** last ran on another build of 19.0.14 (BuildID `f79159f66064ee495ae9cfde35971fe71db8116f`), whose exports include every symbol in `libramses19.symbols`; the imports are checked against this list.

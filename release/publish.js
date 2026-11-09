@@ -16,7 +16,7 @@
  *                          visibility.
  *   dir:<path>             A local folder (relative paths: to the repository):
  *                          catalog.json and the artifacts side by side, a
- *                          test catalog for the emulator.
+ *                          test catalog for a test unit.
  *
  * A catalog entry's artifact url (listedUrl): in a public repository the
  * asset's release download (https://github.com/<owner>/<repo>/releases/

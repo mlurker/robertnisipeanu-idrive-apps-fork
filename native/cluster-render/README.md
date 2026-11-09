@@ -197,8 +197,8 @@ cluster is offered, and what differs is in "iDrive 8".
   id waits until the KOMBI confirms the release: the replies to the unmap
   and the unfetch, and the REMOVED of the fetch when there was one (about
   35 ms on the car). When subscriptions are observable (below) it also
-  waits for the renderer to unsubscribe from the scene, which in the
-  emulator follows the REMOVED by 150-170 ms. Without both within 1 s it
+  waits for the renderer to unsubscribe from the scene, which on a
+  test unit follows the REMOVED by 150-170 ms. Without both within 1 s it
   goes anyway, and the log says which was missing. Every request after a
   release logs how long after it went.
 - **Rendering verified.** The service reads the RAMSES client's console
@@ -680,7 +680,7 @@ the library):
     anyway is refused and waits on the ladder. The scene stays published,
     warm, as on iDrive 7. A scene taken down while its offer stands or is
     stopping stays published until the stop is accepted (unpublished at
-    once, the emulator's stand-in cluster logged errors unassigning it), and
+    once, a test unit's stand-in cluster logged errors unassigning it), and
     no new scene with its id is built meanwhile. At shutdown the service
     waits 1 s for the stops.
   - Rendering is not verified: the RAMSES 27 console is not read, so the
@@ -698,8 +698,8 @@ the library):
   instance 7, DCSM 5), and its offers reach the cluster (VERIFIED on the
   car). The unit's vsomeip policies let uid 5000 (as Hmi8 runs) and 6031
   (`nav_didui`, DidUi's) offer both services, and not root (VERIFIED). As
-  `hmi_5000` the service connected and its offers were shown, in the
-  emulator and on the car (VERIFIED, run by hand).
+  `hmi_5000` the service connected and its offers were shown, on a
+  test unit and on the car (VERIFIED, run by hand).
 
 The targets on iDrive 8 (the `id8_` settings), each VERIFIED on the car
 with this category, content, size and scene id (offered as user 801, shown
@@ -796,7 +796,7 @@ stop accepted within 60 ms, and the cluster showed the picked widget
 again; SIGTERM: stopped, the head unit kept running.
 
 CAR-ONLY on iDrive 8:
-- the release since 0.2.2 (host-tested only, not in the emulator): the
+- the release since 0.2.2 (host-tested only): the
   scene kept published, warm, and the next request waiting for the stop's
   acceptance;
 - the `hud` target, and how the upload budget fits the cluster's link
@@ -854,9 +854,9 @@ The host tests need a C++14 compiler and Node; the rest need Docker
 `ROOTFS` is a copy of the unit's root filesystem, which is not part of this
 repository.
 
-In an emulator of the unit whose stand-in KOMBI has no slot 0x100, run the
-binary as `hmi_5000` with `-s map_slot=0x201`. In an emulator of an
-iDrive 8 unit with a stand-in cluster for a category, run `cluster-render`
+On a test unit whose stand-in KOMBI has no slot 0x100, run the
+binary as `hmi_5000` with `-s map_slot=0x201`. On an
+iDrive 8 test unit with a stand-in cluster for a category, run `cluster-render`
 as `hmi_5000`: it starts the iDrive 8 service.
 `js/showcase.js` puts content of every layer kind on a target through
 the service and prints every event: `node showcase.js [--socket PATH]
@@ -1020,9 +1020,9 @@ Verified off the car:
 - **The target binary** links against the unit's libraries within its
   glibc 2.27 and libstdc++ limits.
 
-Verified in an emulator of the unit: its stand-in KOMBI renderer and Dcsm2
+Verified on a test unit: its stand-in KOMBI renderer and Dcsm2
 provider (not the KOMBI), with the map on 0x201 and clients using the Node
-client under the guest's Node 8.
+client under the unit's Node 8.
 - **Startup and drawing.** The service joined as participant 801, found
   Dcsm2, and drew on both targets at once: a 15 fps video with an overlay
   image on `map`, and a uniform-driven effect on `panel`.
@@ -1070,11 +1070,11 @@ Not verified, needs the car:
     participant;
   - fades on the KOMBI. The take-over and the parked state are VERIFIED
     on the car (above), and the HMI took up to five take-overs in a row
-    within about 73 s (0, 3, 13, 43 and 73 s); the emulated HMI never takes
+    within about 73 s (0, 3, 13, 43 and 73 s); the test unit's HMI never takes
     a cluster slot;
   - the take-overs' 1.5 s pace: five within 6 s;
   - what the HMI does after a take-over in views other than Map view;
-  - heartbeat replies: the emulator does not answer heartbeat requests;
+  - heartbeat replies: the test unit does not answer heartbeat requests;
   - 0x01000400 on the panel while the HMI's speech dialog exists;
   - how a flush's duration and the heartbeat replies behave as the link
     fills, which sets `slow_flush_ms`;
@@ -1094,7 +1094,7 @@ Not verified, needs the car:
     and that panel stays shown until the HMI parks it again; on the car
     the KOMBI showed ours;
   - the mapping guard's signal: that a KOMBI restart takes Dcsm2 away
-    (INFERRED; the emulator's stand-in KOMBI does it on demand);
+    (INFERRED; a test unit's stand-in KOMBI does it on demand);
   - whether a hold's loss is a fault or BMW's content is judged from the
     slot table at the loss, which can lag the KOMBI;
   - `cluster-render guard-reset` restarts the service with no recmgr check:
@@ -1120,8 +1120,8 @@ of ours on the same calls (RAMSES 27 scene, DCSM offer, user 801), as
   stopped).
 
 Verified off the car:
-- **The unit's own libramses 27.0.116r1** (`make test-ramses27`, on the
-  emulator's copy of the unit's root filesystem): every check of
+- **The unit's own libramses 27.0.116r1** (`make test-ramses27`, on a
+  copy of the unit's root filesystem): every check of
   `make test-ramses` passes, nothing logged as an error.
 - **The target binary** loads with the unit's own loader and libraries,
   every symbol bound (`LD_BIND_NOW`).
@@ -1129,7 +1129,7 @@ Verified off the car:
   the same checks, and `make test-ramses` passes on the iDrive 8 unit's own
   copy of libramses 19 too (another build than iDrive 7's).
 
-Verified in an emulator of the iDrive 8 unit (its root filesystem with
+Verified on an iDrive 8 test unit (its root filesystem with
 Hmi8 running, its vsomeip and policies; a stand-in cluster, a DCSM consumer
 and renderer on the unit's libramses, for one category: no KOMBI):
 - **Start.** `cluster-render` found iDrive 8 (both MainApp folders, Hmi8

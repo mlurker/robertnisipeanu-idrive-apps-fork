@@ -69,6 +69,6 @@ fs.writeFileSync(DEV, 'Inter-|   Receive\n face |bytes packets\n  eth0: 1 1 0 0 
 w = collect();
 assert.strictEqual(w.replace(/\(patchd, [^)]*\)/, '(patchd)').replace(/in \S+\n/, 'in DEV\n'),
     '-- CarPlay Wi-Fi band (patchd)\n(none)\n-- P2P interfaces in DEV\n(none)\n-- 802.1X and DHCP lines for P2P interfaces (the last 60)\n(none)\n');
-console.log('ok   no band file, no P2P interface, no kernel line (the emulator): each "(none)"');
+console.log('ok   no band file, no P2P interface, no kernel line: each "(none)"');
 
 try { fs.rmSync ? fs.rmSync(dir, { recursive: true, force: true }) : null; } catch (e) { /* left in tmp */ }

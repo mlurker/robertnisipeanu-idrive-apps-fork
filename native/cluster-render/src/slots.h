@@ -63,7 +63,7 @@
  *   request is outstanding per slot. After a release, the next request of
  *   the scene waits until the display confirms the release
  *   (Port::confirmed) and, when subscriptions are observable, the renderer
- *   has unsubscribed from the scene (in the emulator about 150 ms after the
+ *   has unsubscribed from the scene (on a test unit about 150 ms after the
  *   display's confirmation), at most kConfirmMs. A fetch the display fails within
  *   kFreshSceneMs of the scene's publication (its renderer not having seen
  *   the publication yet) is asked again after kFreshRetryMs, up to

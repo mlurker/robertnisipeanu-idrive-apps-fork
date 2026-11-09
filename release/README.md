@@ -13,7 +13,7 @@ node release/release.js check [<id>...]               # build twice, compare byt
 node release/release.js versions <base>               # a pull request's version and CHANGELOG checks
 node release/release.js stamp [<id>...] [--dry-run]   # next versions into the tree, the release commit
 node release/release.js publish [<id>...|--stamped] [--dry-run]  # (GitHub Actions) new versions, then the catalog
-MGU_PUBLISH=dir:<folder> node release/release.js publish   # a local catalog (emulator, USB stick)
+MGU_PUBLISH=dir:<folder> node release/release.js publish   # a local catalog (test unit, USB stick)
 node release/test/release_test.js
 ```
 

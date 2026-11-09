@@ -407,8 +407,8 @@ Auto change failed, until one succeeds.
 
 It exists only while a process runs the binary it links and that binary is
 not `<target>`'s own file. A process runs a file when its `/proc/<pid>/exe`
-is that file or it maps the file (a binary translator, Rosetta in the
-emulator, runs it so, its `exe` the translator):
+is that file or it maps the file (a binary translator
+runs it so, its `exe` the translator):
 
 | When | What happens to it |
 |---|---|
@@ -838,7 +838,7 @@ still runs (its file kept linked; one started since read the files as they
 are), so Remove patch of a waiting patch, which restores both files, is
 known to leave aapd as it runs: nothing waits.
 
-aapd.conf has no such link. In the emulator the stock aapd reads it at start
+aapd.conf has no such link. On a test unit the stock aapd reads it at start
 and keeps it closed; this is not checked on the car. If aapd keeps it open
 during a session, a density or turn-card change replaces an open file, and
 `/` stays writable until the next head-unit start.
@@ -918,7 +918,7 @@ a normal restart, which runs `var-opt-ro.service` and writes no restart
 record; a `systemctl reboot` is an orderly systemd shutdown, which stops
 every service and does not run `var-opt-ro.service`.
 
-The emulator, with the firmware's recmgr, crashhandler and NodeStateManager,
+A test unit, with the firmware's recmgr, crashhandler and NodeStateManager,
 showed: recmgr writes its record when a unit fails, before it asks for the
 restart; crashhandler writes its record just before its restart request
 (after up to 60 s waiting for a crash report there); both are on disk when
@@ -1122,8 +1122,8 @@ watcher first looked: unless `patchd` killed that run to activate a change
 `/dev/shm/waze-on-cluster/carplay-killed`), or the system is stopping: a
 systemd shutdown (`shutdown.target` queued or active) or an NSM shutdown
 (`var-opt-ro.service` queued or running, or this boot's shutdown record
-already written, since CarPlay can die in it after the record). In the
-emulator nothing in systemd marks the first seconds of an NSM shutdown,
+already written, since CarPlay can die in it after the record). On a
+test unit nothing in systemd marks the first seconds of an NSM shutdown,
 before `var-opt-ro.service` starts (about 3 s, while the NodeStateManager
 sends its clients the shutdown event); a CarPlay death there would still
 count, which has not been seen. A

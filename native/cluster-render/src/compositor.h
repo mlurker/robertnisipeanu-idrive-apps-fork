@@ -37,7 +37,7 @@
  * for again, its layers continue from there in the tick that asks: what
  * their buffers hold is what the scene last flushed, and a renderer that
  * subscribes gets the scene whole, as last flushed, from the RAMSES client
- * (VERIFIED in the emulator: sent at the subscription), so a video writes
+ * (VERIFIED on a test unit: sent at the subscription), so a video writes
  * the tiles that differ from it, not the whole frame. That resend is
  * charged to the byte budget when the display takes the scene (resent()).
  *
