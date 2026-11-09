@@ -355,10 +355,10 @@ function cmdApply(t, dpi, card, yes, unproven) {
     if (cb && cb.err) die('refusing: ' + cb.err);
     var confWhy = cb ? conf.check(origText.toString('utf8')) : confNotOriginal(origText.toString('utf8'));
     if (confWhy) die('refusing: ' + (cb ? 'backup ' + backupPath(t.conf) : t.conf) + ': ' + confWhy);
-    /* An aapd.conf holding one of our edits at another safe area (an earlier version of this tool) is still ours: its
-     * text is the backup's but for numbers in the KOMBI_DISPLAY block, which is how a revert recognises it (otherFile).
-     * The edit below is made from the backup again, so it is brought up to date; any other difference means
-     * something else changed the file. */
+    /* An aapd.conf this patcher wrote earlier can hold other values than the ones below (another dpi or card, or a
+     * geometry changed by a later release): it differs from the backup in numbers of the KOMBI_DISPLAY block only,
+     * which is how a revert recognises it (otherFile). The edit is made from the backup again, so it is brought up to
+     * date instead of refused. Any other difference means something else changed the file. */
     if (cb && !text.equals(cb.buf)) {
         var otherConf = conf.otherFile(text.toString('utf8'), cb.buf.toString('utf8'));
         if (otherConf) die('refusing: ' + t.conf + ' was modified by something else (' + otherConf + ')');

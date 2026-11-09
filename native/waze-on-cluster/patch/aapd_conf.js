@@ -33,9 +33,10 @@
 'use strict';
 
 var DENSITY_MIN = 150, DENSITY_MAX = 400, DENSITY_STEP = 10, DEFAULT_DPI = 180;
-/* The "card" setting is the picture the phone is asked for. 'shown' and 'hidden' are upstream's; 'hud' is the
- * HUD-shaped one (800x480, the UI its left 640x480, for the HUD's right half). It rides on the card setting's
- * plumbing (aa-card, the pending markers, the status), so nothing else in patchd or the boot recovery changes. */
+/* The "card" setting is the picture the phone is asked for: 'shown' and 'hidden' (the turn card shown or hidden, for
+ * the cluster) and 'hud' (800x480, the UI its left 640x480, for the HUD's right half). All three go through the card
+ * setting's plumbing (aa-card, the pending markers, the status), so nothing else in patchd or the boot recovery
+ * needs to know about the HUD picture. */
 var CARDS = ['shown', 'hidden', 'hud'], DEFAULT_CARD = 'shown';
 var DENSITIES = [];
 for (var d = DENSITY_MIN; d <= DENSITY_MAX; d += DENSITY_STEP) DENSITIES.push(d);
@@ -50,10 +51,10 @@ var DIMS = BLOCK + 'DIMENSIONS/' + SIZE + '/';
 var STREAM = { w: 1280, h: 720 };
 var GEOMETRY = {
     /* The safe area is where Maps keeps its overlays: it pins the turn card's left and top edges to the area's, the
-     * arrival pill to its bottom and right edges, and puts the position dot at its centre. The cluster fades the
-     * outer part of the picture's left edge, so the area starts at 389, which centres a 502 wide area on the picture's
-     * middle (640) and keeps the card readable. It starts at the top, and ends at 553 so that the pill sits at the
-     * bottom of the 564 high picture. Upstream's area is 592x432 at 336,84. */
+     * arrival pill to its bottom and right edges, and puts the position dot at its centre. The cluster fades the outer
+     * part of the picture's left side, so the area starts at x=389: that centres its 502 px on the middle of the
+     * picture (640) and keeps the card readable. It starts at the top (y=0) and ends at y=553, so that the pill sits at
+     * the bottom of the 564 px high UI. */
     shown: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 564 }, safe: { x: 389, y: 0, w: 502, h: 553 } },
     hidden: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 720 }, safe: { x: 336, y: 0, w: 592, h: 672 } },
     /* The HUD picture: the cluster's own safe area size (592x432) in the middle of the 640x480 UI. */
@@ -80,8 +81,8 @@ function srcCrop(card, dpi) {
     return W + 'x' + H + ':' + x + ',' + cut + ',' + w + ',' + h;
 }
 
-/* The decode size (tex_size) the HUD picture needs, its UI as it is so it is not stretched to the
- * cluster map's 1088x480; null for the other pictures (the shipped 1088x480). */
+/* The decode size (tex_size) of the HUD picture: its UI's size, so that it is not stretched to the cluster map's
+ * 1088x480; null for the other pictures (the shipped 1088x480). */
 function texSize(card) {
     return card === 'hud' ? GEOMETRY.hud.ui.w + 'x' + GEOMETRY.hud.ui.h : null;
 }

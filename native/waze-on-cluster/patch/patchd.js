@@ -1781,7 +1781,7 @@ function handle(line, sock) {
     } else if (msg.cmd === 'aa-revert') {
         operate('aa', 'reverting', function (cb) { aaRevert(false, false, cb); });
     } else if (msg.cmd === 'aa-restart') {
-        /* nothing waiting is a plain no (the asker may ask after every change), not an error of Android Auto's */
+        /* with nothing waiting the answer is a plain refusal, not an Android Auto error: a client may ask after every change */
         if (!readPending(AA)) { refuse('no Android Auto change waits for a restart'); return; }
         operate('aa', 'restarting', aaRestartNow);
     } else if (msg.cmd === 'aa-density' || msg.cmd === 'aa-card') {
