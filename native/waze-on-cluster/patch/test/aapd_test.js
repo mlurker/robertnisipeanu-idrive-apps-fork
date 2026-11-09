@@ -917,6 +917,13 @@ async function socketTests() {
     ok('aa-density: pending, the disk at 240 dpi, aapd still running the original', spaced.aa.pending === 'apply' && spaced.aa.dpi === 240 &&
         spaced.aa.runDpi === null && marker(t, 'aa-pending').run === null, JSON.stringify(spaced.aa));
 
+    /* LOCAL CHANGE: aa-restart takes a waiting change now only where aapd's own restart is allowed. */
+    var markT = calls(t).length;
+    p.send({ cmd: 'aa-restart' });
+    st = await p.next(function (m) { return m.ev === 'status' && m.aa && m.aa.error; });
+    ok('aa-restart without recmgr\'s aapd entry: refused with the reason, the change still waits, neither the render nor aapd restarted', /recmgr did not load an? aapd restart entry/.test(st.aa.error) &&
+        marker(t, 'aa-pending').action === 'apply' && !calls(t).slice(markT).some(function (l) { return /^systemctl (restart|start|stop)/.test(l); }) && ro(t), JSON.stringify(st.aa) + calls(t).slice(markT).join(';'));
+
     /* Restart head unit: once, then refused, and refused again by a new patchd within 10 min. */
     fs.writeFileSync(t.env.WOC_BOOT_ID, 'boot-R\n');
     p.send({ cmd: 'reboot' });
@@ -977,6 +984,24 @@ async function socketTests() {
     ok('aa-card hidden: the crop override written, deferred, aapd not restarted', st.aa.aapd === 'deferred' && st.aa.card === 'hidden' &&
         cropEnv(r) === 'WOC_SRC_CROP=-s src_crop=1280x720:0,156,1280,564\n' && marker(r, 'aa-pending').action === 'apply' &&
         !calls(r).slice(before).some(function (l) { return /aapd/.test(l); }), JSON.stringify(st.aa) + calls(r).slice(before).join(';'));
+    /* LOCAL CHANGE: aa-restart takes it now: the render restarted first (it reads the crop at its start), then aapd
+     * killed and started; the marker is gone, nothing pending, / read-only, never a head-unit restart. */
+    var victim2 = cp.spawn('sleep', ['300']);
+    children.push(victim2);
+    fs.writeFileSync(r.unitState, JSON.stringify({ pid: victim2.pid }));
+    var died2 = new Promise(function (res) { victim2.on('exit', function (code, sig) { res(sig); }); });
+    var markR = calls(r).length;
+    pr.send({ cmd: 'aa-restart' });
+    st = await pr.next(function (m) { return m.ev === 'status' && m.aa && m.aa.aapd === 'restarted' && m.busy !== 'aa'; });
+    var sig2 = await Promise.race([died2, sleep(3000)]), after = calls(r).slice(markR);
+    var iRender = after.indexOf('systemctl restart waze-on-cluster.service'), iStart = after.indexOf('systemctl start aapd.service');
+    ok('aa-restart: the render restarted, then aapd SIGKILLed and started, nothing pending, / read-only', iRender >= 0 && iStart > iRender && sig2 === 'SIGKILL' &&
+        !st.aa.pending && !marker(r, 'aa-pending') && cropEnv(r) !== null && ro(r), JSON.stringify(st.aa) + after.join(';'));
+    ok('aa-restart: no stop of aapd or carplay, no head-unit restart', !after.some(function (l) { return /systemctl (stop|restart) (aapd|carplay)|reboot/.test(l); }), after.join(';'));
+    markR = calls(r).length;
+    pr.send({ cmd: 'aa-restart' });
+    st = await pr.next(function (m) { return m.ev === 'refused' && m.cmd === 'aa-restart'; });
+    ok('aa-restart: with nothing waiting it is refused (not an error of Android Auto\'s) and nothing is restarted', /no Android Auto change waits/.test(st.reason) && !calls(r).slice(markR).some(function (l) { return /^systemctl (restart|start|stop)/.test(l); }), JSON.stringify(st));
     pr.send({ cmd: 'aa-revert' });
     await pr.next(function (m) { return aaDone(m) && m.aa.state === 'original' || m.aa && m.aa.pending === 'revert'; });
     ok('aa-revert: originals back byte-exact, the crop override gone', sha(r.bin) === sha(SRC) && sha(r.conf) === sha(SRCCONF) && cropEnv(r) === null);

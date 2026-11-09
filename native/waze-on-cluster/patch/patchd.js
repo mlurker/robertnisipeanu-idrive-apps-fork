@@ -28,6 +28,10 @@
  *                    file); fifo = file:// FIFO sink
  *                  {"cmd":"revert"}
  *                  {"cmd":"aa-apply"} | {"cmd":"aa-revert"}   the Android Auto patch
+ *                  {"cmd":"aa-restart"}   LOCAL CHANGE: take the Android Auto change that waits for a head-unit
+ *                                   start now, without that restart: the render (it reads its crop at its start),
+ *                                   then aapd (it reads aapd.conf at its start). Only while one waits and where
+ *                                   aapd's own restart is allowed (recmgr loaded its entry this boot)
  *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"|"hud"}
  *                                   ("hud": LOCAL CHANGE, the HUD-shaped 800x480 picture)
  *                                   save the choice and, with the patch on disk,
@@ -171,6 +175,8 @@ var aapdConf = require('./aapd_conf.js');
 var STATE_DIR = process.env.WOC_STATE_DIR || '/var/opt/waze-on-cluster';
 var AA_DPI_FILE = path.join(STATE_DIR, 'aa-density');
 var AA_CARD_FILE = path.join(STATE_DIR, 'aa-card');
+/* LOCAL CHANGE: the render's unit, restarted (with aapd) to take a change of its crop without a head-unit restart. */
+var WOC_UNIT = process.env.WOC_UNIT || 'waze-on-cluster.service';
 /* With the turn card hidden, the crop waze-on-cluster.service passes to the
  * render (EnvironmentFile): the card's rows grow with the density. The
  * shipped waze-on-cluster.conf holds the crop for the card shown. */
@@ -1562,6 +1568,31 @@ function aaRevert(noRestart, dropBackup, done) {
     });
 }
 
+/* LOCAL CHANGE: takes the Android Auto change that waits for a head-unit start now. aapd reads aapd.conf when it
+ * starts and the render reads its crop (aa-crop.env, as WOC_SRC_CROP) when it starts, so both start again: the
+ * render first, so it is ready for the picture, then aapd by the same SIGKILL and start as any restart of it (the
+ * phone reconnects to a render that is ready). Only while a change waits, and where restartBlocked allows aapd's
+ * restart: recmgr loaded its entry this boot. Never a head-unit restart, and the render's unit is restarted with
+ * systemctl as an install does. done(err, roErr, activation). */
+function aaRestartNow(done) {
+    if (!readPending(AA)) { done(new Error('no Android Auto change waits for a restart')); return; }
+    restartBlocked(AA, function (blocked) {
+        if (blocked) { done(new Error('aapd is not restarted now (' + blocked + '); the change waits for the next head-unit start')); return; }
+        cp.execFile('systemctl', ['restart', WOC_UNIT], { timeout: tmo(30000) }, function (sErr) {
+            if (sErr) { done(new Error('restarting ' + WOC_UNIT + ' failed: ' + sErr.message)); return; }
+            log('Android Auto: ' + WOC_UNIT + ' restarted to read the crop; restarting aapd');
+            remount(true, function (mErr) {
+                if (mErr) { finalizeRo(AA, new Error('remount rw: ' + mErr.message), function (e, r) { done(e, r, null); }); return; }
+                restartUnit(AA, function (rErr) {
+                    if (!rErr && !needed(AA)) unlinkQuiet(AA.running);
+                    settleHeld(AA);
+                    finalizeRo(AA, rErr || null, function (e, r) { done(e, r, e ? null : 'restarted'); });
+                });
+            });
+        });
+    });
+}
+
 /* A file in STATE_DIR, written whole by rename. */
 function saveFile(f, text) {
     try { fs.mkdirSync(STATE_DIR, 0o755); } catch (e) { if (e.code !== 'EEXIST') throw e; }
@@ -1750,6 +1781,10 @@ function handle(line, sock) {
         operate('aa', 'applying', aaEnable);
     } else if (msg.cmd === 'aa-revert') {
         operate('aa', 'reverting', function (cb) { aaRevert(false, false, cb); });
+    } else if (msg.cmd === 'aa-restart') {
+        /* nothing waiting is a plain no (the asker may ask after every change), not an error of Android Auto's */
+        if (!readPending(AA)) { refuse('no Android Auto change waits for a restart'); return; }
+        operate('aa', 'restarting', aaRestartNow);
     } else if (msg.cmd === 'aa-density' || msg.cmd === 'aa-card') {
         var density = msg.cmd === 'aa-density', v = density ? Number(msg.value) : String(msg.value), now = Date.now();
         if ((density ? aapdConf.DENSITIES : aapdConf.CARDS).indexOf(v) < 0) {
