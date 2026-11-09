@@ -212,6 +212,15 @@ function onlyEdits(a, b) {
     ok('status: patched, every edit, 180 dpi, card shown, restorable', /restorable:\s+yes/.test(s) && (s.match(/PATCHED/g) || []).length === 5 &&
         /PATCHED \(180 dpi, card shown, crop 1280x720:0,0,1280,564\)/.test(s), s);
     ok('apply again: nothing to do', /nothing to do/.test(patcher(t, ['apply', '--yes']).out));
+    /* LOCAL CHANGE: an edit of ours at an earlier safe area (another version of the tool) is brought up to date. */
+    var nowConf = fs.readFileSync(t.conf, 'utf8');
+    var tops = []; nowConf.replace(/("SA_OFFSET_TOPPIXELS":\s*)(\d+)/g, function (m, pre, num, at) { tops.push([at + pre.length, num.length]); return m; });
+    var last = tops[tops.length - 1];
+    var earlier = nowConf.slice(0, last[0]) + '7' + nowConf.slice(last[0] + last[1]);
+    ok('earlier geometry: fixture differs from ours only in a KOMBI_DISPLAY number', earlier !== nowConf && conf.otherFile(earlier, SRCCONF.toString('utf8')) === null && conf.edited(SRCCONF.toString('utf8'), earlier) === null);
+    fs.writeFileSync(t.conf, earlier);
+    r = patcher(t, ['apply', '--yes']);
+    ok('earlier geometry: an edit of ours at another safe area is brought up to date, no refusal', r.code === 0 && fs.readFileSync(t.conf, 'utf8') === nowConf, r.out);
     var binAt = sha(t.bin);
     conf.DENSITIES.forEach(function (d) {
         var x = patcher(t, ['apply', '--dpi', String(d), '--yes']);

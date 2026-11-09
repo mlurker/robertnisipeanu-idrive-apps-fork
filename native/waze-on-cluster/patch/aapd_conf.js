@@ -50,7 +50,15 @@ var DIMS = BLOCK + 'DIMENSIONS/' + SIZE + '/';
  * the shown layout has it on the cluster (672 = 84 + 432 + 156). */
 var STREAM = { w: 1280, h: 720 };
 var GEOMETRY = {
-    shown: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 564 }, safe: { x: 336, y: 84, w: 592, h: 432 } },
+    /* LOCAL CHANGE: the safe area, upstream's 592x432 at 336,84, is set by hand with the safe-area editor (0.9.107 to 0.9.113):
+     * 502x553 at 389,0. Maps pins the turn card's left and top edges to the area's left and top, and the arrival pill to its
+     * bottom and right edges (photos of the car at 0.9.105, 0.9.108, 0.9.109). The cluster fades the picture's left edge to
+     * about x=290 at the top, so the card needs its left edge there to be readable (at 0 and at 100 its first letters were
+     * hidden); 389 centres the area on the picture's middle (640), where the gauge gap and the cluster's centre display are (the
+     * photo at 350 had the pill about 30 photo px, 25 to 37 stream px, left of centre). The pill sat at the area's bottom, so the bottom is 553 (the picture ends at 564; it was 548 until 0.9.112, the pill moved 5 px down in 0.9.113). Earlier values: 360x432 at
+     * 568,84 (0.9.104), 360x472 at 568,44 (0.9.105), 538,14 (0.9.106), 502x474 at 334,82 (0.9.107), at 0,0 (0.9.108), at
+     * 100,0 (0.9.109), at 290,0 (0.9.110), at 350,0 (0.9.111). */
+    shown: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 564 }, safe: { x: 389, y: 0, w: 502, h: 553 } },
     hidden: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 720 }, safe: { x: 336, y: 0, w: 592, h: 672 } },
     /* The HUD picture: the cluster's own safe area size (592x432) in the middle of the 640x480 UI. */
     hud: { codec: { w: 800, h: 480 }, ui: { x: 0, y: 0, w: 640, h: 480 }, safe: { x: 24, y: 24, w: 592, h: 432 } },

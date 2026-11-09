@@ -355,7 +355,13 @@ function cmdApply(t, dpi, card, yes, unproven) {
     if (cb && cb.err) die('refusing: ' + cb.err);
     var confWhy = cb ? conf.check(origText.toString('utf8')) : confNotOriginal(origText.toString('utf8'));
     if (confWhy) die('refusing: ' + (cb ? 'backup ' + backupPath(t.conf) : t.conf) + ': ' + confWhy);
-    if (cb && !text.equals(cb.buf) && !conf.edited(cb.buf.toString('utf8'), text.toString('utf8'))) die('refusing: ' + t.conf + ' was modified by something else');
+    /* LOCAL CHANGE: an edit of ours at an earlier geometry (another version of this tool, or an earlier safe area) is
+     * ours too: the text is the backup's but for numbers in the KOMBI_DISPLAY block, as a revert reads it (otherFile),
+     * and the edit below is made from the backup again. Upstream accepts only the current geometry's edits. */
+    if (cb && !text.equals(cb.buf)) {
+        var otherConf = conf.otherFile(text.toString('utf8'), cb.buf.toString('utf8'));
+        if (otherConf) die('refusing: ' + t.conf + ' was modified by something else (' + otherConf + ')');
+    }
 
     var outBin = Buffer.from(buf);
     EDITS.forEach(function (e) { Buffer.from(c.loc[e[0]].patched, 'hex').copy(outBin, c.loc[e[0]].offset); });
