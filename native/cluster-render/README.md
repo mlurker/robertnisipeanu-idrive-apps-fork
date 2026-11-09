@@ -42,7 +42,8 @@ What it costs:
 - frames cross a socket. A whole 1088x480 frame is 783 KB, so 30 a second
   is about 47 MB/s of kernel copies, and Waze's 16 a second about half that;
 - an app's content cannot use arbitrary RAMSES objects, only the layer
-  kinds and assets below.
+  kinds and assets below, or on a target that takes them a whole scene file
+  a root install put in place, changed by edits ("Layers").
 
 What it gives:
 - no two apps fight over a slot, and clients come and go without unmapping
@@ -509,6 +510,19 @@ Beside the layers:
   animation system per scene) on a quad's rotation, offset and scale, a
   part's pose, a mesh camera, or a uniform; nothing is sent per frame. Kept
   and started again in a new scene.
+- **Scene files** (PROTOCOL.md "Scene files", `src/scene_file.h`,
+  `src/scene_edit.h`): on a target with `<target>_scene_files` 1, a RAMSES
+  scene file and its resource files, authored and saved beforehand, loaded
+  as the target's whole scene (RAMSES 19's `loadSceneFromFile`; the file's
+  scene id must be the target's) while the target's layers wait. Taken only
+  from under `/var/opt/`, root's and writable by no one else, each file with
+  the SHA-256 the client gives, so no client can have the service load a
+  file it made. Edit lines (`--hide`, `--rotate`, `--uniform`, `--set`, ...)
+  change its objects by name: kept by key, applied once a tick in the
+  target's one flush, each pattern resolved once per scene and cached by
+  its text, and applied whole to the scene loaded again. A file replaced
+  goes in place, the slot kept. The files' bytes are charged to the upload
+  budget when the scene is published and taken again.
 
 Each target's assets and layers are staged, assets first and then layers
 top first, and flushed once a tick, so a tick's changes reach the display
@@ -597,7 +611,8 @@ node release/tool_artifact.js native/cluster-render --out /tmp/kit   # runs make
 built-in default: the generation (`auto`, `7` or `8`), the identity, the
 targets (slot, content class, scene id, size, linger; on iDrive 8 the
 `id8_` ones: category, content, scene id, size, linger, and the widget's
-menu entry), the guide hold, the upload budget and the tick. A unit's own settings go in
+menu entry), the targets that take scene files (`<target>_scene_files`,
+none as shipped), the guide hold, the upload budget and the tick. A unit's own settings go in
 `/var/opt/cluster-render/cluster-render.local.conf`, which updates keep;
 each key there replaces the shipped value. `-s key=value` on the command
 line overrides both. `cluster-render status` prints the targets, Dcsm2's
@@ -830,7 +845,7 @@ make test                       # every host test (below)
 make test-x86                   # the C++ tests with the unit's gcc 7.5 in Docker (SSE2 paths)
 make target                     # build/target/cluster-render, cluster-render-idrive7, cluster-render-idrive8
                                 # and libcluster_render_client.a, every import checked against the units' libraries
-make test-ramses ROOTFS=…       # every layer kind on the unit's own libramses
+make test-ramses ROOTFS=…       # every layer kind and a scene file on the unit's own libramses
 make test-ramses27 ROOTFS=…     # the same on an iDrive 8 unit's libramses 27
 ```
 
@@ -922,6 +937,17 @@ The host tests:
   value refused with no hold added (a slot that is not whole hex from 0x1
   to 0xfff, listed twice or another target's, a scene id not allowed or
   another target's);
+- `scene_test`: scene files and their edits, on files it writes: SHA-256
+  against the standard's vectors; a scene file and its resource files
+  taken from under the root, also through a symlink staying there, and
+  refused through one leaving it, with `..`, relative, missing, a folder,
+  writable by the group or others (the file or a folder below the root),
+  another owner's, with a hash not its file's or one too few, more than 16
+  resource files; every edit kind parsed and malformed lines refused; the
+  keys a line replaces a kept one by; the edits applied to a synthetic
+  gauge, each pattern resolved once over 30 updates, a line changing
+  nothing reported once, and a new scene given every kept line ending as
+  the first;
 - `guard_test`: the mapping guard's file: a strike read back, a hold's
   mapping disabled at its limit and after a reboot, the default limit never
   disabling, the map's mapping never disabled whatever its limit or the
@@ -945,9 +971,18 @@ The host tests:
   disable it (the map shown without it, also after a service restart, and
   the map's client told), a restart 15 s after any mapping is no strike,
   the map's strikes never disable it, and a client's `guard_reset` is an
-  unknown op;
+  unknown op; scene files: refused on a target without them, with a
+  resource file's hash not its, from outside the root; a synthetic one
+  parked behind stock content with its edits in its first flush, an edit
+  held while parked, shown; made again with its edits by the client after
+  a restart; the layers there waiting, named by the scene's ref or client;
+  unpublished while the HUD (the same scene id) is shown and loaded again
+  with every kept edit; dropped, the layers back; a file of another scene
+  id in error; edit lines refused or changing nothing reported; another
+  file in place, the slot kept; its client gone, shown through the linger
+  and released;
 - `js/test/client_test.js`: the Node client against `host_service`,
-  assets and a mesh layer included.
+  assets, a mesh layer and a scene file included.
 
 ## Verified, and open
 
@@ -974,7 +1009,14 @@ Verified off the car:
     cameras, uniforms included, stopped and dropped with their objects;
   - through the compositor, a lit cube turning in a mesh layer, labels over
     a glyph-atlas asset, a needle sweeping and plasma on the renderer's
-    clock, all back after the panel was taken and published again.
+    clock, all back after the panel was taken and published again;
+  - scene files (on another build of 19.0.14, `abi/ABI.md`): a synthetic
+    gauge saved by the library with its resource file, loaded as the
+    panel's scene with every edit kind read back from the library, its
+    needle turned at 30 edits a second, unpublished for the HUD's shared
+    scene id and loaded again with every kept edit, replaced in place by a
+    second file with the slot kept, dropped with the resources its loads
+    made; a file of another scene id refused.
 - **The target binary** links against the unit's libraries within its
   glibc 2.27 and libstdc++ limits.
 

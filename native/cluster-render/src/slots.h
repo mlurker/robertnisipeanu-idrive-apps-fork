@@ -82,7 +82,13 @@
  *   and flushes nothing. The scene goes only when another target needs its
  *   scene id: two targets with one scene id cannot both be requested (the
  *   second waits until the first is released), and the second's request
- *   takes the first's scene down before it publishes its own.
+ *   takes the first's scene down before it publishes its own. A scene the
+ *   scenes report stale (a scene file came or went) is unpublished: a
+ *   requested target that is wanted is released first and asked for again,
+ *   one not wanted keeps it until its release (the linger). A requested
+ *   target whose scene is outdated (its file replaced) keeps its slot: its
+ *   scene is unpublished and published again at once, and the renderer's
+ *   subscription is awaited as after a showing (rendering, below).
  * - The display service going away takes every target down; when it comes
  *   back, the targets still wanted are requested again after kSettleMs. The
  *   scenes stay published: RAMSES publication does not go through Dcsm2,
@@ -130,6 +136,9 @@ namespace crs {
 struct TargetSpec {
     std::string name;
     uint64_t slot = 0;
+    /* Clients may have the service load a scene file as its scene
+     * (PROTOCOL.md "Scene files"); <target>_scene_files. */
+    bool scene_files = false;
     uint32_t content_class = 0;
     uint64_t content = 0;   /* iDrive 8 */
     uint64_t scene_id = 0;
@@ -226,6 +235,14 @@ public:
     /* The display took t's published scene again (parked or shown): the
      * renderer that subscribed to it at the fetch got it whole. */
     virtual void resent(const TargetSpec &, int64_t) {}
+    /* t's published scene is not the one its content needs any more (a
+     * scene file came or went, compositor.h): the slot manager takes it
+     * down and publishes it again, at once while the target is wanted or
+     * not requested, else once it is released. */
+    virtual bool stale(const TargetSpec &) const { return false; }
+    /* t's published scene is of a file since replaced: published again in
+     * place, the target not released (republish()). */
+    virtual bool outdated(const TargetSpec &) const { return false; }
 };
 
 enum class TargetState { Idle, Acquiring, Parked, Shown, Lingering, Waiting, Unavailable };
@@ -454,6 +471,9 @@ private:
     void acquire(int i, int64_t now_ms);
     void take_down(int i, int64_t now_ms);
     void drop_scene(int i);
+    /* A requested target's scene unpublished and published again, the
+     * target kept requested; refused, it waits on the ladder. */
+    void republish(int i, int64_t now_ms);
     /* The last release of the target's scene id is confirmed by the display
      * and its renderer has unsubscribed, or neither is awaited any longer. */
     bool settled(int i, int64_t now_ms) const;

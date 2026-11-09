@@ -463,6 +463,24 @@ void SlotManager::drop_scene(int i)
     t_[i].resend_due = false;
 }
 
+void SlotManager::republish(int i, int64_t now_ms)
+{
+    const TargetSpec &spec = specs_[i];
+    Target &t = t_[i];
+    log_info("target %s: its scene file replaced: scene 0x%llx published again in place, the slot kept",
+             spec.name.c_str(), (unsigned long long)spec.scene_id);
+    scenes_->unpublish(spec);
+    subs_[spec.scene_id] = Subscribers();   /* its renderer subscribes again */
+    t.scene_ms = now_ms;
+    std::string err;
+    if (scenes_->publish(spec, &err))
+        return;
+    t.scene = false;
+    subs_.erase(spec.scene_id);
+    take_down(i, now_ms);
+    wait(i, Holder::None, true, "scene: " + err, now_ms);
+}
+
 void SlotManager::unpublish_all()
 {
     for (size_t i = 0; i < t_.size(); i++)
@@ -1023,6 +1041,20 @@ void SlotManager::tick(int64_t now_ms)
         const int i = (int)k;
         Target &t = t_[i];
         const TargetSpec &spec = specs_[i];
+
+        /* A scene file came or went: published again, the stale scene
+         * shown until then while nothing wants the target (its linger). */
+        if (t.scene && (!t.requested || t.wanted) && scenes_->stale(spec)) {
+            log_info("target %s: a scene file came or went: its scene goes and is published again", spec.name.c_str());
+            if (t.requested)
+                release(i, now_ms);
+            drop_scene(i);
+        } else if (t.scene && scenes_->outdated(spec)) {
+            if (t.requested)
+                republish(i, now_ms);
+            else
+                drop_scene(i);
+        }
         const TargetState s = t.status.state;
 
         if (!up) {

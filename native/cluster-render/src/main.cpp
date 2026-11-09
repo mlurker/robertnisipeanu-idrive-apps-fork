@@ -71,6 +71,10 @@ void define_keys(cld::Config *cfg)
     cfg->define("map_yield_ms", "1500");
     cfg->define("panel_yield_ms", "1500");
     cfg->define("hud_yield_ms", "1500");
+    /* whether clients may have a target's scene loaded from a scene file */
+    cfg->define("map_scene_files", "0");
+    cfg->define("panel_scene_files", "0");
+    cfg->define("hud_scene_files", "0");
     cfg->define("dcsm_hmi_client_handle", "1");
     cfg->define("guide_hold", "1");
     cfg->define("guide_slots", "auto");
@@ -170,6 +174,7 @@ bool load_targets(const cld::Config &cfg, int generation, std::vector<TargetSpec
         } else {
             t.content_class = (uint32_t)cfg.num((p + "content_class").c_str());
             t.take_over_stock = cfg.num((p + "take_over_stock").c_str()) != 0;
+            t.scene_files = cfg.num((p + "scene_files").c_str()) == 1;
             if (cfg.has((p + "yield_slots").c_str())) {
                 std::stringstream ys(cfg.str((p + "yield_slots").c_str()));
                 std::string ysl;
