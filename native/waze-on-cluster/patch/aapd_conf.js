@@ -33,10 +33,9 @@
 'use strict';
 
 var DENSITY_MIN = 150, DENSITY_MAX = 400, DENSITY_STEP = 10, DEFAULT_DPI = 180;
-/* LOCAL CHANGE (idrive7-aa, patches/waze-on-cluster-aa-hud-picture.patch): the "card" setting is the
- * picture the phone is asked for. 'shown' and 'hidden' are upstream's; 'hud' is the HUD-shaped one
- * (800x480, the UI its left 640x480, for the HUD's right half). It rides on the card setting's plumbing
- * (aa-card, the pending markers, the status) so nothing else in patchd or the boot recovery changes. */
+/* The "card" setting is the picture the phone is asked for. 'shown' and 'hidden' are upstream's; 'hud' is the
+ * HUD-shaped one (800x480, the UI its left 640x480, for the HUD's right half). It rides on the card setting's
+ * plumbing (aa-card, the pending markers, the status), so nothing else in patchd or the boot recovery changes. */
 var CARDS = ['shown', 'hidden', 'hud'], DEFAULT_CARD = 'shown';
 var DENSITIES = [];
 for (var d = DENSITY_MIN; d <= DENSITY_MAX; d += DENSITY_STEP) DENSITIES.push(d);
@@ -50,14 +49,11 @@ var DIMS = BLOCK + 'DIMENSIONS/' + SIZE + '/';
  * the shown layout has it on the cluster (672 = 84 + 432 + 156). */
 var STREAM = { w: 1280, h: 720 };
 var GEOMETRY = {
-    /* LOCAL CHANGE: the safe area, upstream's 592x432 at 336,84, is set by hand with the safe-area editor (0.9.107 to 0.9.113):
-     * 502x553 at 389,0. Maps pins the turn card's left and top edges to the area's left and top, and the arrival pill to its
-     * bottom and right edges (photos of the car at 0.9.105, 0.9.108, 0.9.109). The cluster fades the picture's left edge to
-     * about x=290 at the top, so the card needs its left edge there to be readable (at 0 and at 100 its first letters were
-     * hidden); 389 centres the area on the picture's middle (640), where the gauge gap and the cluster's centre display are (the
-     * photo at 350 had the pill about 30 photo px, 25 to 37 stream px, left of centre). The pill sat at the area's bottom, so the bottom is 553 (the picture ends at 564; it was 548 until 0.9.112, the pill moved 5 px down in 0.9.113). Earlier values: 360x432 at
-     * 568,84 (0.9.104), 360x472 at 568,44 (0.9.105), 538,14 (0.9.106), 502x474 at 334,82 (0.9.107), at 0,0 (0.9.108), at
-     * 100,0 (0.9.109), at 290,0 (0.9.110), at 350,0 (0.9.111). */
+    /* The safe area is where Maps keeps its overlays: it pins the turn card's left and top edges to the area's, the
+     * arrival pill to its bottom and right edges, and puts the position dot at its centre. The cluster fades the
+     * outer part of the picture's left edge, so the area starts at 389, which centres a 502 wide area on the picture's
+     * middle (640) and keeps the card readable. It starts at the top, and ends at 553 so that the pill sits at the
+     * bottom of the 564 high picture. Upstream's area is 592x432 at 336,84. */
     shown: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 564 }, safe: { x: 389, y: 0, w: 502, h: 553 } },
     hidden: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 720 }, safe: { x: 336, y: 0, w: 592, h: 672 } },
     /* The HUD picture: the cluster's own safe area size (592x432) in the middle of the 640x480 UI. */

@@ -355,9 +355,10 @@ function cmdApply(t, dpi, card, yes, unproven) {
     if (cb && cb.err) die('refusing: ' + cb.err);
     var confWhy = cb ? conf.check(origText.toString('utf8')) : confNotOriginal(origText.toString('utf8'));
     if (confWhy) die('refusing: ' + (cb ? 'backup ' + backupPath(t.conf) : t.conf) + ': ' + confWhy);
-    /* LOCAL CHANGE: an edit of ours at an earlier geometry (another version of this tool, or an earlier safe area) is
-     * ours too: the text is the backup's but for numbers in the KOMBI_DISPLAY block, as a revert reads it (otherFile),
-     * and the edit below is made from the backup again. Upstream accepts only the current geometry's edits. */
+    /* An aapd.conf holding one of our edits at another safe area (an earlier version of this tool) is still ours: its
+     * text is the backup's but for numbers in the KOMBI_DISPLAY block, which is how a revert recognises it (otherFile).
+     * The edit below is made from the backup again, so it is brought up to date; any other difference means
+     * something else changed the file. */
     if (cb && !text.equals(cb.buf)) {
         var otherConf = conf.otherFile(text.toString('utf8'), cb.buf.toString('utf8'));
         if (otherConf) die('refusing: ' + t.conf + ' was modified by something else (' + otherConf + ')');

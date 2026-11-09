@@ -212,7 +212,7 @@ function onlyEdits(a, b) {
     ok('status: patched, every edit, 180 dpi, card shown, restorable', /restorable:\s+yes/.test(s) && (s.match(/PATCHED/g) || []).length === 5 &&
         /PATCHED \(180 dpi, card shown, crop 1280x720:0,0,1280,564\)/.test(s), s);
     ok('apply again: nothing to do', /nothing to do/.test(patcher(t, ['apply', '--yes']).out));
-    /* LOCAL CHANGE: an edit of ours at an earlier safe area (another version of the tool) is brought up to date. */
+    /* our edit at another safe area (an earlier version of the tool) is brought up to date, not refused */
     var nowConf = fs.readFileSync(t.conf, 'utf8');
     var tops = []; nowConf.replace(/("SA_OFFSET_TOPPIXELS":\s*)(\d+)/g, function (m, pre, num, at) { tops.push([at + pre.length, num.length]); return m; });
     var last = tops[tops.length - 1];
@@ -253,8 +253,8 @@ function onlyEdits(a, b) {
     });
     ok('every density and card is recognised and is the original\'s file', every);
 
-    /* LOCAL CHANGE (idrive7-aa): the HUD picture, the card setting's third value: an 800x480 stream with the
-     * UI its left 640x480 and the cluster's own safe area size in it, decoded at 640x480 (tex_size). */
+    /* the HUD picture, the card setting's third value: an 800x480 stream with the UI its left 640x480 and the
+     * cluster's own safe area size in it, decoded at 640x480 (tex_size) */
     r = patcher(t, ['apply', '--dpi', '230', '--card', 'hud', '--yes']);
     k = JSON.parse(fs.readFileSync(t.conf, 'utf8')).SCREENS.KOMBI_DISPLAY; c = k.CODEC_DEFINITION.HIGH_1080P; sa = k.DIMENSIONS['12.3'];
     ok('card hud: 800x480, margins 160 x 0, UI 640x480, safe area 592x432 at 24,24, 230 dpi', r.code === 0 && c.CODEC_WIDTH === 800 && c.CODEC_HEIGHT === 480 &&
@@ -917,7 +917,7 @@ async function socketTests() {
     ok('aa-density: pending, the disk at 240 dpi, aapd still running the original', spaced.aa.pending === 'apply' && spaced.aa.dpi === 240 &&
         spaced.aa.runDpi === null && marker(t, 'aa-pending').run === null, JSON.stringify(spaced.aa));
 
-    /* LOCAL CHANGE: aa-restart takes a waiting change now only where aapd's own restart is allowed. */
+    /* aa-restart takes a waiting change now only where aapd's own restart is allowed */
     var markT = calls(t).length;
     p.send({ cmd: 'aa-restart' });
     st = await p.next(function (m) { return m.ev === 'status' && m.aa && m.aa.error; });
@@ -984,8 +984,8 @@ async function socketTests() {
     ok('aa-card hidden: the crop override written, deferred, aapd not restarted', st.aa.aapd === 'deferred' && st.aa.card === 'hidden' &&
         cropEnv(r) === 'WOC_SRC_CROP=-s src_crop=1280x720:0,156,1280,564\n' && marker(r, 'aa-pending').action === 'apply' &&
         !calls(r).slice(before).some(function (l) { return /aapd/.test(l); }), JSON.stringify(st.aa) + calls(r).slice(before).join(';'));
-    /* LOCAL CHANGE: aa-restart takes it now: the render restarted first (it reads the crop at its start), then aapd
-     * killed and started; the marker is gone, nothing pending, / read-only, never a head-unit restart. */
+    /* aa-restart takes it now: the render restarted first (it reads the crop when it starts), then aapd killed and
+     * started; the marker is gone, nothing pending, / read-only, never a head-unit restart */
     var victim2 = cp.spawn('sleep', ['300']);
     children.push(victim2);
     fs.writeFileSync(r.unitState, JSON.stringify({ pid: victim2.pid }));
@@ -1134,7 +1134,7 @@ async function socketTests() {
     run = marker(n, 'aa-pending').run;
     ok('a second deferred change keeps the first run', !!run && run.dpi === 180 && run.card === 'shown' &&
         st.aa.runDpi === 180 && st.aa.runCard === 'shown', JSON.stringify([marker(n, 'aa-pending'), st.aa]));
-    /* LOCAL CHANGE (idrive7-aa): the HUD picture also sets the decode size; a deferred change like the others. */
+    /* the HUD picture also sets the decode size; a deferred change like the others */
     pn.send({ cmd: 'aa-card', value: 'hud' });
     st = await pn.next(function (m) { return aaDone(m) && m.aa.diskCard === 'hud'; });
     run = marker(n, 'aa-pending').run;

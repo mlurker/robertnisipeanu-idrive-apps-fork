@@ -789,7 +789,7 @@ int main()
     feeds.set_hud_offset(800, 800);
     bpump(300, &f2);
     hl = layer_on(2);
-    /* LOCAL CHANGE (idrive7-aa): the map may hang past the HUD's edge by half its size (kHudOverhangPct); upstream held it inside. */
+    /* the map may hang past the HUD's edge by half its size (kHudOverhangPct) */
     ok("moved too far: held at half its size past the HUD's bottom right corner (320x140: x 640, y 409)",
        hl && hl->params.rect.x == 640 && hl->params.rect.y == 409 && hl->params.rect.w == 320 && hl->params.rect.h == 140);
     ok("moved too far: the offset reported as far as it goes (400,240 for 320x140)",

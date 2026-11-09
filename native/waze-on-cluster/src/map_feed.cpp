@@ -165,8 +165,8 @@ crk::QuadRect MapFeed::quad(uint32_t tw, uint32_t th) const
     const uint32_t cx = q.x, cy = q.y;
     q.x = (uint32_t)(x < 0 ? 0 : x > xmax ? xmax : x);
     q.y = (uint32_t)(y < 0 ? 0 : y > ymax ? ymax : y);
-    /* LOCAL CHANGE (idrive7-aa): the map may hang past the scene's edge by kHudOverhangPct of its size; q stays the
-     * one held inside, over_x_/over_y_ is the way past it. */
+    /* the map may hang past the scene's edge by kHudOverhangPct of its size: q stays the position held inside the
+     * scene, over_x_/over_y_ is how far past it the map goes */
     const long ox = (long)q.w * kHudOverhangPct / 100, oy = (long)q.h * kHudOverhangPct / 100;
     const long px = x < -ox ? -ox : x > xmax + ox ? xmax + ox : x;
     const long py = y < -oy ? -oy : y > ymax + oy ? ymax + oy : y;

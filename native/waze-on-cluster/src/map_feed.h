@@ -55,8 +55,8 @@ namespace woc {
 /* The HUD map's widest size, % of the HUD's width: wider is cut off at its
  * edges. A larger hud_width_pct is held to it. */
 const unsigned kHudMaxPct = 85;
-/* LOCAL CHANGE (idrive7-aa): how far the HUD map may hang past the HUD scene's edge, % of its own width and height
- * (upstream holds it fully inside). The part past the edge is cut off by the renderer. */
+/* How far the HUD map may hang past the HUD scene's edge, % of its own width and height, so it can be placed
+ * partly off the HUD. The part past the edge is cut off by the renderer. */
 const unsigned kHudOverhangPct = 50;
 
 struct FeedConfig {
@@ -234,8 +234,8 @@ private:
     std::string target_state_, holder_;
     /* the HUD map's offset as quad() last placed it; as asked until then */
     mutable int placed_x_ = 0, placed_y_ = 0;
-    /* LOCAL CHANGE (idrive7-aa): how far the placed map hangs past the HUD scene beyond what quad() holds inside it
-     * (signed position minus the held one), added to the layer's x and y. */
+    /* how far the placed map hangs past the HUD scene beyond what quad() holds inside it (the signed position minus
+     * the held one), added to the layer's x and y */
     mutable int over_x_ = 0, over_y_ = 0;
     unsigned cap_kb_ = 0, max_kb_ = 0;
     std::string budget_reason_, refused_, report_;

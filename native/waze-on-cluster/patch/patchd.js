@@ -28,12 +28,12 @@
  *                    file); fifo = file:// FIFO sink
  *                  {"cmd":"revert"}
  *                  {"cmd":"aa-apply"} | {"cmd":"aa-revert"}   the Android Auto patch
- *                  {"cmd":"aa-restart"}   LOCAL CHANGE: take the Android Auto change that waits for a head-unit
- *                                   start now, without that restart: the render (it reads its crop at its start),
- *                                   then aapd (it reads aapd.conf at its start). Only while one waits and where
+ *                  {"cmd":"aa-restart"}   take the Android Auto change that waits for a head-unit start now,
+ *                                   without that restart: restart the render (it reads its crop when it starts),
+ *                                   then aapd (it reads aapd.conf when it starts). Only while one waits and where
  *                                   aapd's own restart is allowed (recmgr loaded its entry this boot)
  *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"|"hud"}
- *                                   ("hud": LOCAL CHANGE, the HUD-shaped 800x480 picture)
+ *                                   ("hud": the HUD-shaped 800x480 picture)
  *                                   save the choice and, with the patch on disk,
  *                                   apply it (one change per DENSITY_SPACING_MS)
  *                  {"cmd":"reboot"} activate a deferred patch with a normal
@@ -175,7 +175,7 @@ var aapdConf = require('./aapd_conf.js');
 var STATE_DIR = process.env.WOC_STATE_DIR || '/var/opt/waze-on-cluster';
 var AA_DPI_FILE = path.join(STATE_DIR, 'aa-density');
 var AA_CARD_FILE = path.join(STATE_DIR, 'aa-card');
-/* LOCAL CHANGE: the render's unit, restarted (with aapd) to take a change of its crop without a head-unit restart. */
+/* The render's unit: restarted with aapd to take a change of its crop (read when it starts) without a head-unit restart. */
 var WOC_UNIT = process.env.WOC_UNIT || 'waze-on-cluster.service';
 /* With the turn card hidden, the crop waze-on-cluster.service passes to the
  * render (EnvironmentFile): the card's rows grow with the density. The
@@ -860,7 +860,7 @@ function aaCard() {
 
 /* The crop override for card and dpi, null for the shipped one. */
 function cropEnv(card, dpi) {
-    /* LOCAL CHANGE: the HUD picture also sets the decode size (tex_size) to its UI, 640x480. */
+    /* The HUD picture is decoded at its UI size (tex_size 640x480), not at the map slot's. */
     if (card === 'hud') return 'WOC_SRC_CROP=-s src_crop=' + aapdConf.srcCrop(card, dpi) + ' -s tex_size=' + aapdConf.texSize(card) + '\n';
     return card === 'hidden' ? 'WOC_SRC_CROP=-s src_crop=' + aapdConf.srcCrop(card, dpi) + '\n' : null;
 }
@@ -1568,12 +1568,11 @@ function aaRevert(noRestart, dropBackup, done) {
     });
 }
 
-/* LOCAL CHANGE: takes the Android Auto change that waits for a head-unit start now. aapd reads aapd.conf when it
- * starts and the render reads its crop (aa-crop.env, as WOC_SRC_CROP) when it starts, so both start again: the
- * render first, so it is ready for the picture, then aapd by the same SIGKILL and start as any restart of it (the
- * phone reconnects to a render that is ready). Only while a change waits, and where restartBlocked allows aapd's
- * restart: recmgr loaded its entry this boot. Never a head-unit restart, and the render's unit is restarted with
- * systemctl as an install does. done(err, roErr, activation). */
+/* Takes the Android Auto change that waits for a head-unit start now. aapd reads aapd.conf when it starts and the
+ * render reads its crop (aa-crop.env, as WOC_SRC_CROP) when it starts, so both start again: the render first, so it
+ * is ready when the phone reconnects, then aapd by the same SIGKILL and start as any restart of it. Only while a
+ * change waits and where restartBlocked allows aapd's restart (recmgr loaded its entry this boot). The render's unit
+ * is restarted with systemctl, as an install does. done(err, roErr, activation). */
 function aaRestartNow(done) {
     if (!readPending(AA)) { done(new Error('no Android Auto change waits for a restart')); return; }
     restartBlocked(AA, function (blocked) {
