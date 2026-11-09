@@ -244,6 +244,24 @@ function onlyEdits(a, b) {
     });
     ok('every density and card is recognised and is the original\'s file', every);
 
+    /* LOCAL CHANGE (idrive7-aa): the HUD picture, the card setting's third value: an 800x480 stream with the
+     * UI its left 640x480 and the cluster's own safe area size in it, decoded at 640x480 (tex_size). */
+    r = patcher(t, ['apply', '--dpi', '230', '--card', 'hud', '--yes']);
+    k = JSON.parse(fs.readFileSync(t.conf, 'utf8')).SCREENS.KOMBI_DISPLAY; c = k.CODEC_DEFINITION.HIGH_1080P; sa = k.DIMENSIONS['12.3'];
+    ok('card hud: 800x480, margins 160 x 0, UI 640x480, safe area 592x432 at 24,24, 230 dpi', r.code === 0 && c.CODEC_WIDTH === 800 && c.CODEC_HEIGHT === 480 &&
+        c.HORIZONTAL_MARGIN_SIZE === 160 && c.VERTICAL_MARGIN_SIZE === 0 && c.WIDTH_TARGET_VIEWPORT === 640 && c.HEIGHT_TARGET_VIEWPORT === 480 &&
+        [sa.SA_OFFSET_LEFTPIXELS, sa.SA_OFFSET_TOPPIXELS, sa.SA_WIDTHPIXELS, sa.SA_HEIGHTPIXELS].join() === '24,24,592,432' && c.REPORTED_SCREEN_DENSITY === 230, r.out);
+    ok('card hud: status names the crop', /PATCHED \(230 dpi, card hud, crop 800x480:0,0,640,480\)/.test(status(t)));
+    ok('card hud: the decode size is its UI, the others keep the shipped one',
+        conf.texSize('hud') === '640x480' && conf.texSize('shown') === null && conf.texSize('hidden') === null);
+    conf.DENSITIES.forEach(function (d) {
+        var e = conf.edited(origText, conf.transform(origText, d, 'hud'));
+        if (!e || e.dpi !== d || e.card !== 'hud') ok('card hud at ' + d + ' dpi is recognised', false);
+    });
+    ok('card hud: only aapd.conf changes, aapd stays as it was', sha(t.bin) === binAt);
+    r = patcher(t, ['apply', '--dpi', '240', '--card', 'hidden', '--yes']);      // the state the tests below start from
+    ok('card hud: back to another card setting', r.code === 0 && /PATCHED \(240 dpi, card hidden/.test(status(t)), r.out);
+
     /* Undo needs no anchors: the patched aapd with an anchor changed (an
      * older release's edit there), and aapd.conf with KOMBI_DISPLAY numbers
      * no geometry of ours writes. */
@@ -1082,6 +1100,15 @@ async function socketTests() {
     run = marker(n, 'aa-pending').run;
     ok('a second deferred change keeps the first run', !!run && run.dpi === 180 && run.card === 'shown' &&
         st.aa.runDpi === 180 && st.aa.runCard === 'shown', JSON.stringify([marker(n, 'aa-pending'), st.aa]));
+    /* LOCAL CHANGE (idrive7-aa): the HUD picture also sets the decode size; a deferred change like the others. */
+    pn.send({ cmd: 'aa-card', value: 'hud' });
+    st = await pn.next(function (m) { return aaDone(m) && m.aa.diskCard === 'hud'; });
+    run = marker(n, 'aa-pending').run;
+    ok('aa-card hud: crop and decode size written, deferred, the first run kept', cropEnv(n) === 'WOC_SRC_CROP=-s src_crop=800x480:0,0,640,480 -s tex_size=640x480\n' &&
+        !!run && run.dpi === 180 && run.card === 'shown' && st.aa.card === 'hud', JSON.stringify([cropEnv(n), marker(n, 'aa-pending'), st.aa]));
+    pn.send({ cmd: 'aa-card', value: 'windscreen' });
+    st = await pn.next(function (m) { return m.ev === 'refused' && m.cmd === 'aa-card'; });
+    ok('aa-card: a value outside shown, hidden and hud is refused', /card must be/.test(st.reason), JSON.stringify(st));
     fs.writeFileSync(path.join(n.shm, 'aa-pending'), JSON.stringify({ action: 'apply' }) + '\n');
     pn.send({ cmd: 'aa-density', value: 190 });
     st = await pn.next(function (m) { return aaDone(m) && m.aa.dpi === 190; });

@@ -28,7 +28,8 @@
  *                    file); fifo = file:// FIFO sink
  *                  {"cmd":"revert"}
  *                  {"cmd":"aa-apply"} | {"cmd":"aa-revert"}   the Android Auto patch
- *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"}
+ *                  {"cmd":"aa-density","value":n} | {"cmd":"aa-card","value":"shown"|"hidden"|"hud"}
+ *                                   ("hud": LOCAL CHANGE, the HUD-shaped 800x480 picture)
  *                                   save the choice and, with the patch on disk,
  *                                   apply it (one change per DENSITY_SPACING_MS)
  *                  {"cmd":"reboot"} activate a deferred patch with a normal
@@ -852,7 +853,11 @@ function aaCard() {
 }
 
 /* The crop override for card and dpi, null for the shipped one. */
-function cropEnv(card, dpi) { return card === 'hidden' ? 'WOC_SRC_CROP=-s src_crop=' + aapdConf.srcCrop(card, dpi) + '\n' : null; }
+function cropEnv(card, dpi) {
+    /* LOCAL CHANGE: the HUD picture also sets the decode size (tex_size) to its UI, 640x480. */
+    if (card === 'hud') return 'WOC_SRC_CROP=-s src_crop=' + aapdConf.srcCrop(card, dpi) + ' -s tex_size=' + aapdConf.texSize(card) + '\n';
+    return card === 'hidden' ? 'WOC_SRC_CROP=-s src_crop=' + aapdConf.srcCrop(card, dpi) + '\n' : null;
+}
 
 function aaMsg(st) {
     var m = { state: busy === 'aa' ? 'busy' : st.state, density: st.density, card: st.card, densities: [aapdConf.DENSITY_MIN, aapdConf.DENSITY_MAX, aapdConf.DENSITY_STEP],

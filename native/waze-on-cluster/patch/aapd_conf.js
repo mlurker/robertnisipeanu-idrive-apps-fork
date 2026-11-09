@@ -33,7 +33,11 @@
 'use strict';
 
 var DENSITY_MIN = 150, DENSITY_MAX = 400, DENSITY_STEP = 10, DEFAULT_DPI = 180;
-var CARDS = ['shown', 'hidden'], DEFAULT_CARD = 'shown';
+/* LOCAL CHANGE (idrive7-aa, patches/waze-on-cluster-aa-hud-picture.patch): the "card" setting is the
+ * picture the phone is asked for. 'shown' and 'hidden' are upstream's; 'hud' is the HUD-shaped one
+ * (800x480, the UI its left 640x480, for the HUD's right half). It rides on the card setting's plumbing
+ * (aa-card, the pending markers, the status) so nothing else in patchd or the boot recovery changes. */
+var CARDS = ['shown', 'hidden', 'hud'], DEFAULT_CARD = 'shown';
 var DENSITIES = [];
 for (var d = DENSITY_MIN; d <= DENSITY_MAX; d += DENSITY_STEP) DENSITIES.push(d);
 
@@ -48,6 +52,8 @@ var STREAM = { w: 1280, h: 720 };
 var GEOMETRY = {
     shown: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 564 }, safe: { x: 336, y: 84, w: 592, h: 432 } },
     hidden: { codec: STREAM, ui: { x: 0, y: 0, w: 1280, h: 720 }, safe: { x: 336, y: 0, w: 592, h: 672 } },
+    /* The HUD picture: the cluster's own safe area size (592x432) in the middle of the 640x480 UI. */
+    hud: { codec: { w: 800, h: 480 }, ui: { x: 0, y: 0, w: 640, h: 480 }, safe: { x: 24, y: 24, w: 592, h: 432 } },
 };
 var SLOT = { w: 1088, h: 480 };
 
@@ -61,12 +67,19 @@ function cardCut(dpi) { return Math.max(CARD_CUT, Math.ceil((0.62 * dpi + 10) / 
  * with it hidden, the rows under the card, narrowed and centred to keep the
  * slot's 1088:480 when fewer than 564 rows are left. Every number even. */
 function srcCrop(card, dpi) {
+    if (card === 'hud') { var hg = GEOMETRY.hud; return hg.codec.w + 'x' + hg.codec.h + ':0,0,' + hg.ui.w + ',' + hg.ui.h; }
     var W = STREAM.w, H = STREAM.h, keep = H - CARD_CUT;
     if (card !== 'hidden') return W + 'x' + H + ':0,0,' + W + ',' + keep;
     var cut = cardCut(dpi), h = H - cut;
     if (h >= keep) return W + 'x' + H + ':0,' + cut + ',' + W + ',' + keep;
     var w = Math.min(W, Math.round(h * SLOT.w / SLOT.h / 2) * 2), x = Math.floor((W - w) / 4) * 2;
     return W + 'x' + H + ':' + x + ',' + cut + ',' + w + ',' + h;
+}
+
+/* The decode size (tex_size) the HUD picture needs, its UI as it is so it is not stretched to the
+ * cluster map's 1088x480; null for the other pictures (the shipped 1088x480). */
+function texSize(card) {
+    return card === 'hud' ? GEOMETRY.hud.ui.w + 'x' + GEOMETRY.hud.ui.h : null;
 }
 
 /* Every number in a JSON text, by its key path ("A/B/C"), with its span;
@@ -244,5 +257,5 @@ function otherFile(cur, orig) {
 module.exports = {
     GEOMETRY: GEOMETRY, DENSITIES: DENSITIES, DEFAULT_DPI: DEFAULT_DPI,
     DENSITY_MIN: DENSITY_MIN, DENSITY_MAX: DENSITY_MAX, DENSITY_STEP: DENSITY_STEP, CARDS: CARDS, DEFAULT_CARD: DEFAULT_CARD,
-    PROVEN: PROVEN, check: check, transform: transform, edited: edited, stockOriginal: stockOriginal, otherFile: otherFile, srcCrop: srcCrop,
+    PROVEN: PROVEN, check: check, transform: transform, edited: edited, stockOriginal: stockOriginal, otherFile: otherFile, srcCrop: srcCrop, texSize: texSize,
 };
