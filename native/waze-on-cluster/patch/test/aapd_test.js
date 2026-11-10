@@ -212,7 +212,7 @@ function onlyEdits(a, b) {
     ok('status: patched, every edit, 180 dpi, card shown, restorable', /restorable:\s+yes/.test(s) && (s.match(/PATCHED/g) || []).length === 5 &&
         /PATCHED \(180 dpi, card shown, crop 1280x720:0,0,1280,564\)/.test(s), s);
     ok('apply again: nothing to do', /nothing to do/.test(patcher(t, ['apply', '--yes']).out));
-    /* an aapd.conf written with another safe area (an earlier release) is brought up to date, not refused */
+    /* apply brings an aapd.conf that holds our edit at another safe area up to date instead of refusing it */
     var nowConf = fs.readFileSync(t.conf, 'utf8');
     var tops = []; nowConf.replace(/("SA_OFFSET_TOPPIXELS":\s*)(\d+)/g, function (m, pre, num, at) { tops.push([at + pre.length, num.length]); return m; });
     var last = tops[tops.length - 1];
