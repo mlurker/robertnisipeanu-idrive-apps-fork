@@ -110,8 +110,11 @@
  *                    supported on this car (head unit: ...)"; a binary the
  *                    patcher cannot patch, one something else modified, a
  *                    build outside the patcher's proven list that CarPlay's
- *                    Patch button has not patched yet, a carplay.service
- *                    that starts another program)
+ *                    Patch button has not patched yet, a cluster coding
+ *                    other than KI_KOMBI_VARIANT 7: "not supported on this
+ *                    car (KI_KOMBI_VARIANT n)", or "cluster coding
+ *                    unreadable", a carplay.service that starts another
+ *                    program)
  *                  {"ev":"refused","cmd":...,"reason":...}   to the asker: a command
  *                                   not taken (another operation runs, the
  *                                   spacing between changes, a bad value, an
@@ -688,7 +691,7 @@ function writePending(t, action, run, extra) {
 function readState(cb) {
     if (statusInFlight) { cb(cachedState); return; }
     statusInFlight = true;
-    cp.execFile(process.execPath, [PATCHER, 'status', '--target', TARGET], { timeout: tmo(15000) }, function (err, out) {
+    cp.execFile(process.execPath, [PATCHER, 'status', '--target', TARGET, '--coding', CODING], { timeout: tmo(15000) }, function (err, out) {
         statusInFlight = false;
         var text = (out || '') + '';
         var variant = /variant:\s+PATCHED -> IC_(HIGH|MID)/.exec(text);
@@ -705,6 +708,7 @@ function readState(cb) {
         var proven = !/proven:\s+no/.test(text);
         var restorable = /^restorable:\s+yes$/m.test(text);
         var backup = /backup:\s+(\S+)/.exec(text);
+        var coding = /^coding:\s+KI_KOMBI_VARIANT (\d+)$/m.exec(text);
         var hasBackup = !!backup && backup[1] !== 'none';
         /* "patched" requires every edit: the variant gate, a known sink
          * (redirected to this tool, or stock in avb mode), self-start, and —
@@ -743,15 +747,16 @@ function readState(cb) {
          * site not found, or one it does not recognise), one something else
          * modified (no backup of ours, not the pristine build), a build
          * outside the proven list that CarPlay's Patch button has not
-         * patched (no backup of ours), or another program started as
-         * carplay. */
+         * patched (no backup of ours), a cluster coding other than the
+         * proven one or one that cannot be read (Android Auto's words), or
+         * another program started as carplay. */
         var hu = headUnit.refused();
         var conflict = hu ? notSupported(hu)
             : err && !text ? 'carplay status unreadable: ' + err.message
             : !known ? 'not patchable' + (unknownWhy ? ': ' + unknownWhy[1] : '')
             : !hasBackup && !pristine ? 'carplay was modified by something else'
             : !hasBackup && !proven ? 'untested carplay build'
-            : foreignStart(CP);
+            : codingConflict(coding) || foreignStart(CP);
         /* A change waiting for the next head-unit start: the running carplay is
          * not the binary on disk, so neither state applies to it yet. */
         var carplay = null, binary = state;
@@ -759,7 +764,7 @@ function readState(cb) {
         if (pending) { state = 'unknown'; mode = null; reason = pending.reason; carplay = 'deferred'; }
         cachedState = { state: state, panel: variant ? variant[1].toLowerCase() : null, mode: mode, res: res, safe: safe, reason: reason, carplay: carplay,
                         pending: pending ? pending.action || 'apply' : null, pendingBy: pending ? pending.by : null,
-                        conflict: conflict, binary: binary, known: known, backup: hasBackup, restorable: restorable, proven: proven, recovered: recovered(TARGET),
+                        conflict: conflict, coding: coding ? Number(coding[1]) : null, binary: binary, known: known, backup: hasBackup, restorable: restorable, proven: proven, recovered: recovered(TARGET),
                         ours: !!(variant || selfstart || resMatch || sinkRedirected), unreadable: !!(err && !text),
                         complete: !err && /^end:\s+complete$/m.test(text) };
         cb(cachedState);
@@ -825,14 +830,12 @@ function readAaState(cb, fresh) {
         else if (known) st.reason = 'partly patched; Android Auto\'s Patch button applies the rest';
         st.binary = st.state;
         var hu = headUnit.refused();
-        st.conflict = hu ? notSupported(hu)
-            : !coding ? 'cluster coding unreadable'
-            : Number(coding[1]) !== AA_CODING ? 'not supported on this car (KI_KOMBI_VARIANT ' + coding[1] + ')'
-            : st.otherBuild ? 'aapd is another build than our backup'
+        st.conflict = hu ? notSupported(hu) : codingConflict(coding) || (
+              st.otherBuild ? 'aapd is another build than our backup'
             : !known && !backup ? 'not patchable' + (unknownWhy ? ': ' + unknownWhy[1] : '')
             : !backup && !pristine ? 'aapd was modified by something else'
             : confWhy && !backup ? 'aapd.conf not usable: ' + confWhy[1]
-            : foreignStart(AA) || (!backup && !proven ? 'untested aapd build' : null);
+            : foreignStart(AA) || (!backup && !proven ? 'untested aapd build' : null));
         st.recovered = recovered(AAPD);
         var pending = readPending(AA);
         if (pending) {
@@ -842,7 +845,14 @@ function readAaState(cb, fresh) {
         done(st);
     });
 }
-var AA_CODING = require('./aapd_patch.js').CODING.proven;
+/* The cluster coding (KI_KOMBI_VARIANT) both patches were proven on, and
+ * the conflict of a coding a status read (its "coding:" line matched for the
+ * variant, or null when it is unreadable), or null on the proven one. */
+var PROVEN_CODING = require('./aapd_patch.js').CODING.proven;
+function codingConflict(coding) {
+    return !coding ? 'cluster coding unreadable'
+        : Number(coding[1]) !== PROVEN_CODING ? 'not supported on this car (KI_KOMBI_VARIANT ' + coding[1] + ')' : null;
+}
 
 /* The conflict of a head unit that refuses our parts, in the words the
  * app shows as not supported. */
@@ -1486,7 +1496,7 @@ function patchWith(t, args, action, blocked, done, run) {
  * install-time activation never does. */
 function apply(panel, mode, noRestart, unproven, done) {
     if (panel !== 'high' && panel !== 'mid') { done(new Error('panel must be high or mid')); return; }
-    var args = ['apply', '--panel', panel, '--target', TARGET, '--yes'].concat(unproven ? ['--unproven'] : []);
+    var args = ['apply', '--panel', panel, '--target', TARGET, '--coding', CODING, '--yes'].concat(unproven ? ['--unproven'] : []);
     if (mode === 'avb') {
         log('apply IC_' + panel.toUpperCase() + ', stock AVB sink (the render joins the media bus)');
     } else if (mode === 'udp') {
@@ -2003,6 +2013,33 @@ function hookStep(which, t, read, run, done) {
     });
 }
 
+/* On a car coded otherwise than KI_KOMBI_VARIANT 7, a patch an earlier
+ * release's install wrote and recorded proven that has not started yet (its
+ * apply pending, or carplay running the file it replaced) has its record
+ * put on trial: boot recovery restores it after one failed start, and its
+ * watcher records it proven once it ran healthy. carplay's bytes are not
+ * touched, nor is the record of a patch that has started (one that works
+ * today keeps its threshold). A write that fails leaves the record as it
+ * was. cb() when done. */
+function trialUnstarted(cb) {
+    readState(function (st) {
+        var rec = record.current(TARGET);
+        if (st.coding === null || st.coding === PROVEN_CODING || !rec || rec.patched !== true || rec.proven !== true || rec.trial ||
+            !(st.pending === 'apply' || needed(CP))) { cb(); return; }
+        remount(true, function (mErr) {
+            if (mErr) { log('activate: the patch waiting for its start stays recorded proven: remount rw: ' + mErr.message); cb(); return; }
+            try {
+                record.write(TARGET, { patched: true, proven: false, trial: true });
+                log('activate: KI_KOMBI_VARIANT ' + st.coding + ': the patch waiting for its start is recorded on trial');
+            } catch (e) { log('activate: the patch waiting for its start stays recorded proven: ' + e.message); }
+            remountRo(3, function (roErr) {
+                if (roErr) log('WARNING: ' + roErr.message + ' — the next head-unit start mounts / read-only again');
+                cb();
+            });
+        });
+    });
+}
+
 /* Runs activate or deactivate once and exits; the last stdout line is its
  * JSON result. Never stops or restarts carplay or aapd. CarPlay first: when
  * its step fails, Android Auto's does not run, so the install's rollback or
@@ -2047,7 +2084,7 @@ function oneShot(which) {
             finish(1);
             return;
         }
-        hookStep(which, CP, readState, function (op, cb) {
+        (which === 'activate' ? trialUnstarted : function (cb) { cb(); })(function () { hookStep(which, CP, readState, function (op, cb) {
             if (op === 'apply') apply('high', 'avb', true, false, cb); else revert(true, true, cb);
         }, function (code, r) {
             result.status = r.status;
@@ -2067,7 +2104,7 @@ function oneShot(which) {
                 result.aa = aaR;
                 finish(which === 'deactivate' ? aaCode : 0);
             });
-        });
+        }); });
     });
 }
 

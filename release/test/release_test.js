@@ -10,7 +10,8 @@
  * `deactivate`, `mguHmi`, `keepRunning`, ...) and leaves `requires` and
  * `uninstallable` to the catalog, as mgu-store's `deploy/hu artifact`; a malformed
  * `requires` or `mguHmi` is refused; the build tree takes each submodule at
- * the commit HEAD records, and refuses one its checkout lacks; and this
+ * the commit HEAD records, and refuses one its checkout lacks; a unit's
+ * `runsInSafeMode` reaches the artifact; and this
  * repository's Waze chain is
  * declared: the app (for iDrive 7) requires waze-on-cluster, which requires
  * cluster-render and a deploy tool that runs install hooks, and has both
@@ -98,6 +99,22 @@ test('a tool artifact keeps the fields the deploy tool reads', () => {
     assert.strictEqual(m.uninstallable, undefined, 'the catalog\'s');
     assert.strictEqual(m.mguProvides, undefined, 'only fields the tool sets');
     assert.deepStrictEqual(m.files.map((f) => f.path), ['hook.js']);
+});
+
+test('a tool artifact keeps runsInSafeMode on the units that set it, and nothing on the others', () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mgu-rel-test-'));
+    const dir = fixtureTool(root, Object.assign({}, FIXTURE, { units: [
+        { name: 'fixture-tool.service', from: 'systemd/fixture-tool.service' },
+        { name: 'fixture-tool-boot.service', from: 'systemd/fixture-tool.service', runsInSafeMode: true }] }));
+    const m = JSON.parse(untgz(buildArtifact(dir, path.join(root, 'out')))['component.json'].toString('utf8'));
+    assert.deepStrictEqual(m.units, [{ name: 'fixture-tool.service' }, { name: 'fixture-tool-boot.service', runsInSafeMode: true }]);
+});
+
+test('waze-on-cluster\'s units that put CarPlay and aapd back run in safe mode; the rest do not', () => {
+    const c = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'native', 'waze-on-cluster', 'component.json'), 'utf8'));
+    assert.deepStrictEqual(c.units.filter((u) => u.runsInSafeMode === true).map((u) => u.name),
+        ['waze-on-cluster-boot.service', 'waze-on-cluster-aa-boot.service', 'waze-on-cluster-recovery.service']);
+    assert.ok(c.units.every((u) => u.runsInSafeMode === undefined || u.runsInSafeMode === true));
 });
 
 test('a tool catalog entry carries requires, mguHmi and uninstallable; the catalog check accepts it', () => {
