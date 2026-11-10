@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze na armaturi",
     "description": "Prikaže zemljevid Waze iz CarPlay na armaturni plošči: vklopite popravek v sistemu vozila in zemljevid sledi CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Signali HUD",
+    "description": "Smerniki in opozorilo o mrtvem kotu vozila na projekcijskem zaslonu (HUD)."
   }
 }

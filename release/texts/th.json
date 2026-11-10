@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze บนหน้าปัด",
     "description": "แสดงแผนที่ Waze ของ CarPlay บนหน้าปัด: เปิดแพตช์จาก HMI แล้วแผนที่จะแสดงตาม CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "สัญญาณบน HUD",
+    "description": "แสดงไฟเลี้ยวและคำเตือนจุดบอดของรถบนจอแสดงผลบนกระจก (HUD)"
   }
 }

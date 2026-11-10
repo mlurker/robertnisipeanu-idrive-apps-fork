@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze sul quadro",
     "description": "Porta la mappa Waze di CarPlay sul quadro strumenti: attiva la patch dal sistema dell'auto e la mappa segue CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Segnali HUD",
+    "description": "Frecce e avviso angolo cieco dell’auto sull’head-up display (HUD)."
   }
 }

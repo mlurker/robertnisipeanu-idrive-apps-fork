@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze على لوحة العدادات",
     "description": "يعرض خريطة Waze من CarPlay على لوحة العدادات: فعّل التصحيح من HMI وستتبع الخريطة CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "إشارات HUD",
+    "description": "إشارات الانعطاف وتحذير النقطة العمياء للسيارة على شاشة العرض الأمامية (HUD)."
   }
 }

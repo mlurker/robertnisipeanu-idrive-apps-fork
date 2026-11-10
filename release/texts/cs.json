@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze na přístrojovém štítu",
     "description": "Přenese mapu Waze z CarPlay na přístrojový štít: zapněte opravu v HMI a mapa sleduje CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Signály HUD",
+    "description": "Směrovky a varování před mrtvým úhlem vozu na head-up displeji (HUD)."
   }
 }

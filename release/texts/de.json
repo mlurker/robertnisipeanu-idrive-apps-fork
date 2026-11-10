@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze im Kombiinstrument",
     "description": "Bringt die CarPlay-Waze-Karte ins Kombiinstrument: Patch im HMI aktivieren, und die Karte folgt CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD-Signale",
+    "description": "Blinker und Toter-Winkel-Warnung des Fahrzeugs im Head-up-Display (HUD)."
   }
 }

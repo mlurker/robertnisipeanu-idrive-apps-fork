@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze no quadrante",
     "description": "Coloca o mapa Waze do CarPlay no quadrante de instrumentos: ative a correção no HMI e o mapa acompanha o CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Sinais no HUD",
+    "description": "Piscas e aviso de ângulo morto do carro no head-up display (HUD)."
   }
 }

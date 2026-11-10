@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze i instrumentpanelet",
     "description": "Viser CarPlay-Waze-kartet i instrumentpanelet: slå på patchen fra HMI-en, så følger kartet CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD-signaler",
+    "description": "Bilens blinklys og advarsel om blind sone på head-up-displayet (HUD)."
   }
 }

@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze di panel instrumen",
     "description": "Menampilkan peta Waze CarPlay di panel instrumen: aktifkan patch dari HMI dan peta mengikuti CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Sinyal HUD",
+    "description": "Lampu sein dan peringatan titik buta mobil di head-up display (HUD)."
   }
 }

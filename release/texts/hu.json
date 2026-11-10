@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze a műszerfalon",
     "description": "A CarPlay Waze-térképét a műszerfalra helyezi: kapcsolja be a javítást az autó kezelőfelületén, és a térkép követi a CarPlay-t"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD-jelzések",
+    "description": "Az autó irányjelzői és holttérfigyelmeztetése a szélvédőre vetített kijelzőn (HUD)."
   }
 }

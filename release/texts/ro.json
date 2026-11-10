@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze pe bord",
     "description": "Aduce harta Waze din CarPlay pe bordul digital: activați patch-ul din interfața mașinii, iar harta urmează CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Semnale HUD",
+    "description": "Semnalizările și avertizarea de unghi mort ale mașinii pe afișajul head-up (HUD)."
   }
 }
