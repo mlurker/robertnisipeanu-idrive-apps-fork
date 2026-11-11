@@ -212,7 +212,12 @@ function onlyEdits(a, b) {
     ok('status: patched, every edit, 180 dpi, card shown, restorable', /restorable:\s+yes/.test(s) && (s.match(/PATCHED/g) || []).length === 5 &&
         /PATCHED \(180 dpi, card shown, crop 1280x720:0,0,1280,564\)/.test(s), s);
     ok('apply again: nothing to do', /nothing to do/.test(patcher(t, ['apply', '--yes']).out));
-    /* apply brings an aapd.conf that holds our edit at another safe area up to date instead of refusing it */
+    /* Re-apply over an earlier edit. A unit patched by an earlier release holds our edit with another safe area, which
+     * this release's geometry cannot rebuild, so apply used to refuse it as "modified by something else". The fixture
+     * is the patched aapd.conf with its last SA_OFFSET_TOPPIXELS (in the KOMBI_DISPLAY block) set to 7. The first check
+     * proves the fixture is such a file: it differs from the original in KOMBI_DISPLAY numbers only (otherFile), and
+     * the old test (edited) does not recognise it. The second runs apply and expects it to succeed and to leave the
+     * file as a fresh apply writes it. */
     var nowConf = fs.readFileSync(t.conf, 'utf8');
     var tops = []; nowConf.replace(/("SA_OFFSET_TOPPIXELS":\s*)(\d+)/g, function (m, pre, num, at) { tops.push([at + pre.length, num.length]); return m; });
     var last = tops[tops.length - 1];
@@ -253,8 +258,13 @@ function onlyEdits(a, b) {
     });
     ok('every density and card is recognised and is the original\'s file', every);
 
-    /* the HUD picture, the card setting's third value: an 800x480 stream with the UI its left 640x480 and the
-     * cluster's own safe area size in it, decoded at 640x480 (tex_size) */
+    /* The HUD picture, the card setting's third value ('hud'). It is an 800x480 stream with the UI in its left 640x480
+     * (the margins are what is left of the stream: 160 wide, 0 high). The cluster's safe area size, 592x432, sits in
+     * the UI at 24,24, and the picture is decoded at the UI's size, 640x480 (tex_size), so that it is not stretched
+     * to the cluster map's 1088x480. The checks below: apply writes these numbers and the dpi into aapd.conf; the
+     * status names the crop; only 'hud' has a decode size; the edit is recognised at every dpi, so revert and a
+     * later apply treat it as ours; and aapd itself is not changed. The last apply puts a cluster card back, the
+     * state the tests below start from. */
     r = patcher(t, ['apply', '--dpi', '230', '--card', 'hud', '--yes']);
     k = JSON.parse(fs.readFileSync(t.conf, 'utf8')).SCREENS.KOMBI_DISPLAY; c = k.CODEC_DEFINITION.HIGH_1080P; sa = k.DIMENSIONS['12.3'];
     ok('card hud: 800x480, margins 160 x 0, UI 640x480, safe area 592x432 at 24,24, 230 dpi', r.code === 0 && c.CODEC_WIDTH === 800 && c.CODEC_HEIGHT === 480 &&

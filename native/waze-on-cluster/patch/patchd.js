@@ -1584,11 +1584,14 @@ function aaRevert(noRestart, dropBackup, done) {
     });
 }
 
-/* Takes the Android Auto change that waits for a head-unit start now. aapd reads aapd.conf when it starts and the
- * render reads its crop (aa-crop.env, as WOC_SRC_CROP) when it starts, so both start again: the render first, so it
- * is ready when the phone reconnects, then aapd by the same SIGKILL and start as any restart of it. Only while a
- * change waits and where restartBlocked allows aapd's restart (recmgr loaded its entry this boot). The render's unit
- * is restarted with systemctl, as an install does. done(err, roErr, activation). */
+/* Applies a waiting Android Auto change (the cluster or HUD picture, the dpi) now, without a head-unit restart.
+ * Such a change is saved first and used from the next head-unit start, because two programs read their settings only
+ * when they start: aapd reads aapd.conf, and the render reads its crop (aa-crop.env, as WOC_SRC_CROP). This restarts
+ * both. The render goes first (systemctl restart, as an install does), so it is ready when the phone reconnects. Then
+ * aapd is restarted (the same SIGKILL and start as any restart of it) and the waiting marker is cleared.
+ * It refuses, and the change keeps waiting for the next head-unit start, when no change waits or when restartBlocked
+ * does not allow aapd's restart (recmgr has not loaded its entry this boot).
+ * done(err, roErr, activation): activation is 'restarted' when both were restarted. */
 function aaRestartNow(done) {
     if (!readPending(AA)) { done(new Error('no Android Auto change waits for a restart')); return; }
     restartBlocked(AA, function (blocked) {

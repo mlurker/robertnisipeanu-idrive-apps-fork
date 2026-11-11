@@ -124,6 +124,8 @@ void MapFeed::make_layer()
     lo_.contend = true;   /* the map takes the slot back from the stock map */
     lo_.guide_hold = cfg_.guide_hold;
     lo_.yield = cfg_.target != "hud" || !cfg_.hud_keep_shown;
+    /* The layer's position is the quad's plus the overhang quad() worked out (over_x_/over_y_: how far the HUD map goes
+     * past the scene's edge, so that it can be moved to the right half). The same two lines are in set_hud_offset(). */
     lo_.x = (int)q.x + over_x_;
     lo_.y = (int)q.y + over_y_;
     lo_.w = q.w;
@@ -188,6 +190,8 @@ void MapFeed::set_hud_offset(int dx, int dy)
     if (cfg_.target != "hud" || !layer_ || !target_size(client_.targets, "hud", &tw, &th))
         return;
     const crk::QuadRect q = quad(tw, th);
+    /* The same position as when the layer is made (quad's plus the overhang); quad() has just set over_x_/over_y_
+     * for the new offset. */
     lo_.x = (int)q.x + over_x_;
     lo_.y = (int)q.y + over_y_;
     client_.set(layer_, lo_);
