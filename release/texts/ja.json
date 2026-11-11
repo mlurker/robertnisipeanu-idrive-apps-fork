@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze メーター表示",
     "description": "CarPlayのWazeマップをメーターに表示します。HMIからパッチを有効にすると、地図がCarPlayに連動します"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUDシグナル",
+    "description": "ヘッドアップディスプレイ（HUD）に、ウインカーと死角警告を表示します。"
   }
 }

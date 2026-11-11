@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze no painel",
     "description": "Coloca o mapa do Waze do CarPlay no painel de instrumentos: ative o patch pelo HMI e o mapa acompanha o CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Sinais no HUD",
+    "description": "Setas e alerta de ponto cego do carro no head-up display (HUD)."
   }
 }

@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze na prístrojovke",
     "description": "Zobrazí mapu Waze z CarPlay na prístrojovej doske: zapnite opravu v systéme vozidla a mapa sleduje CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Signály HUD",
+    "description": "Smerovky a upozornenie na mŕtvy uhol vozidla na head-up displeji (HUD)."
   }
 }

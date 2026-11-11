@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze in instrumentpaneel",
     "description": "Zet de CarPlay-Waze-kaart op het instrumentpaneel: schakel de patch in via de HMI en de kaart volgt CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD-signalen",
+    "description": "Richtingaanwijzers en dodehoekwaarschuwing van de auto op het head-updisplay (HUD)."
   }
 }

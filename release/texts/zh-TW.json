@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze 儀表板顯示",
     "description": "將 CarPlay 的 Waze 地圖顯示在儀表板上：從 HMI 啟用修補，地圖即會跟隨 CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD 訊號",
+    "description": "在抬頭顯示器（HUD）上顯示車輛的方向燈與盲點警示。"
   }
 }

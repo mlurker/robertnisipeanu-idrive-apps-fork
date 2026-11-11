@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze au combiné",
     "description": "Affiche la carte Waze de CarPlay sur le combiné d'instruments : activez le correctif depuis l'interface du véhicule et la carte suit CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Signaux du HUD",
+    "description": "Clignotants et alerte d’angle mort de la voiture sur l’affichage tête haute (HUD)."
   }
 }

@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze na zegarach",
     "description": "Przenosi mapę Waze z CarPlay na zestaw wskaźników: włącz poprawkę w HMI, a mapa podąża za CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Sygnały na HUD",
+    "description": "Kierunkowskazy i ostrzeżenie o martwym polu samochodu na wyświetlaczu head-up (HUD)."
   }
 }

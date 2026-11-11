@@ -1,0 +1,26 @@
+{
+  "id": "mlurker-hud-signals",
+  "kind": "tool",
+  "version": "0.5.0",
+  "license": "GPL-3.0-or-later",
+  "title": "HUD signals",
+  "description": "Car’s turn and blind spot warning signals on the head-up display (HUD).",
+  "mguHmi": ["ID7"],
+  "requires": { "mgu-deploy": "0.7.11", "cluster-render": "0.4.0" },
+  "uninstallable": true,
+  "build": ["make", "target"],
+  "files": [
+    { "path": "mlurker-hud-signals", "from": "build/target/mlurker-hud-signals", "mode": "0755" },
+    { "path": "mlurker-hud-signals.conf", "from": "mlurker-hud-signals.conf", "mode": "0644" },
+    { "path": "LICENSE", "from": "LICENSE", "mode": "0644" }
+  ],
+  "units": [
+    { "name": "mlurker-hud-signals.service", "from": "systemd/mlurker-hud-signals.service" }
+  ],
+  "enable": [
+    { "unit": "mlurker-hud-signals.service", "target": "multi-user.target" }
+  ],
+  "crashNames": ["mlurker-hud-signals"],
+  "recmgr": ["mlurker-hud-signals"],
+  "restart": ["mlurker-hud-signals.service"]
+}

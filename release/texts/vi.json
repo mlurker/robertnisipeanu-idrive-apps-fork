@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze trên bảng đồng hồ",
     "description": "Đưa bản đồ Waze của CarPlay lên bảng đồng hồ: bật bản vá từ HMI và bản đồ sẽ theo CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Tín hiệu trên HUD",
+    "description": "Đèn xi nhan và cảnh báo điểm mù của xe trên màn hình hiển thị kính lái (HUD)."
   }
 }

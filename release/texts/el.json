@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze στα όργανα",
     "description": "Φέρνει τον χάρτη Waze του CarPlay στον πίνακα οργάνων: ενεργοποιήστε τη διόρθωση από το HMI και ο χάρτης ακολουθεί το CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Σήματα HUD",
+    "description": "Τα φλας και η προειδοποίηση τυφλού σημείου του αυτοκινήτου στην οθόνη head-up (HUD)."
   }
 }

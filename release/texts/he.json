@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze בלוח המחוונים",
     "description": "מציג את מפת Waze של CarPlay בלוח המחוונים: הפעל את התיקון מה-HMI והמפה תעקוב אחר CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "אותות HUD",
+    "description": "איתות ואזהרת שטח מת של הרכב בתצוגה העילית (HUD)."
   }
 }

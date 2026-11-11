@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze 仪表盘显示",
     "description": "将 CarPlay 的 Waze 地图显示在仪表盘上：在 HMI 中启用补丁，地图即跟随 CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD 信号",
+    "description": "在抬头显示（HUD）上显示车辆的转向灯和盲区警告。"
   }
 }

@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 mlurker@gmail.com
+[Unit]
+Description=mlurker-hud-signals: the car's turn indicators as layers on the HUD
+RequiresMountsFor=/var/opt
+# The shared cluster renderer draws the arrows; its socket starts it at the first
+# connection.
+Wants=cluster-render.socket
+# After waze-on-cluster: both connect to the renderer at boot, and the renderer's first client
+# has to be waze-on-cluster (the cluster map; the other way round the map's scene was never
+# subscribed on a G05, 2026-11-04). "After" does nothing when it is not installed.
+After=local-fs.target cluster-render.socket waze-on-cluster.service
+
+[Service]
+# hmi_5000 is the one uid whose vsomeip security policy lets a process request the
+# Light service (scripts/car/hud-and-signal-utils/HUD-SIGNALS.md), and it runs cluster-render. tm_oap_app opens the
+# cluster renderer's socket, as it does for waze-on-cluster. mgu_someip is in
+# hmi_5000's own groups (routing manager).
+User=hmi_5000
+Group=hmi_5000
+SupplementaryGroups=tm_oap_app
+# The log file's directory, on /var/opt so it outlives reboots, made as root ("+"); a
+# failure ("-") only leaves the service without the file.
+ExecStartPre=-+/bin/sh -c 'mkdir -p /var/opt/mlurker-hud-signals/log && chown hmi_5000:hmi_5000 /var/opt/mlurker-hud-signals /var/opt/mlurker-hud-signals/log'
+# Gives waze-on-cluster time to connect first.
+ExecStartPre=/bin/sleep 15
+ExecStart=/var/opt/mlurker-hud-signals/current/mlurker-hud-signals -c /var/opt/mlurker-hud-signals/current/mlurker-hud-signals.conf
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

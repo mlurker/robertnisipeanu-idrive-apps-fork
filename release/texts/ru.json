@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze на приборах",
     "description": "Выводит карту Waze из CarPlay на приборную панель: включите патч в HMI, и карта будет следовать за CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "Сигналы на HUD",
+    "description": "Указатели поворота и предупреждение о слепой зоне автомобиля на проекционном дисплее (HUD)."
   }
 }

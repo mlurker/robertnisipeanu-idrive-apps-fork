@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze i kombiinstrumentet",
     "description": "Visar CarPlay-Waze-kartan i kombiinstrumentet: aktivera patchen från HMI:n så följer kartan CarPlay"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD-signaler",
+    "description": "Bilens blinkers och varning för döda vinkeln på head-up-displayen (HUD)."
   }
 }

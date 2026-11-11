@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze göstergede",
     "description": "CarPlay Waze haritasını gösterge paneline getirir: yamayı aracın ekranından etkinleştirin, harita CarPlay'i izler"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD sinyalleri",
+    "description": "Aracın sinyalleri ve kör nokta uyarısı head-up ekranda (HUD)."
   }
 }

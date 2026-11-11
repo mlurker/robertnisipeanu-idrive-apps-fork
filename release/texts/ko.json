@@ -10,5 +10,9 @@
   "robertn_waze_cluster": {
     "title": "Waze 계기판 표시",
     "description": "CarPlay의 Waze 지도를 계기판에 표시합니다. HMI에서 패치를 켜면 지도가 CarPlay를 따라갑니다"
+  },
+  "mlurker-hud-signals": {
+    "title": "HUD 신호",
+    "description": "방향지시등과 사각지대 경고를 헤드업 디스플레이(HUD)에 표시합니다."
   }
 }

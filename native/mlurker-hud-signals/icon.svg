@@ -1,0 +1,23 @@
+<!-- mlurker-hud-signals icon: HUD screen with blind spot arcs, speed and green turn arrows. Vector redraw of icon.png (same layout, stretched to the square). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140"><defs>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6ecf7"/><stop offset="0.5" stop-color="#9fb0cc"/><stop offset="1" stop-color="#d4dcec"/></linearGradient>
+<linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14305c"/><stop offset="0.45" stop-color="#091a34"/><stop offset="1" stop-color="#040a16"/></linearGradient>
+<linearGradient id="arcO" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc400"/><stop offset="0.5" stop-color="#ffdc00"/><stop offset="1" stop-color="#ff9800"/></linearGradient>
+<filter id="gl" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="9"/></filter>
+<g id="arcs"><g fill="none" stroke-linecap="round">
+<path d="M312 316 A174 174 0 0 1 312 624" stroke="url(#arcO)" stroke-width="24"/>
+<path d="M266 375 A103 103 0 0 1 266 566" stroke="#ffd800" stroke-width="26"/>
+<path d="M238 416 A64 64 0 0 1 238 524" stroke="#f08a00" stroke-width="26"/></g></g>
+<g id="arrow"><path d="M380 648 L455 590 L455 622 L538 622 L538 674 L455 674 L455 706 Z" fill="#3ee03e"/></g>
+</defs>
+<rect width="140" height="140" fill="#000"/>
+<g transform="scale(0.14374 0.22293) translate(-140 -172)">
+<rect x="148" y="188" width="957" height="592" rx="96" fill="none" stroke="#7fa6e8" stroke-width="14" opacity="0.55" filter="url(#gl)"/>
+<rect x="154" y="194" width="945" height="580" rx="92" fill="url(#panel)" stroke="url(#rim)" stroke-width="14"/>
+<path d="M780 211 H1040 Q1090 211 1090 262 V430 Z" fill="#ffffff" opacity="0.07"/>
+<g filter="url(#gl)" opacity="0.55"><use href="#arcs"/><use href="#arcs" transform="translate(1252 0) scale(-1 1)"/></g>
+<use href="#arcs"/><use href="#arcs" transform="translate(1252 0) scale(-1 1)"/>
+<text x="626" y="528" font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" text-anchor="middle" font-size="172" fill="#eef2fa">62</text>
+<g filter="url(#gl)" opacity="0.7"><use href="#arrow"/><use href="#arrow" transform="translate(1252 0) scale(-1 1)"/></g>
+<use href="#arrow"/><use href="#arrow" transform="translate(1252 0) scale(-1 1)"/>
+</g></svg>
