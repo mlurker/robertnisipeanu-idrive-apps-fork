@@ -92,7 +92,7 @@ cluster is offered, and what differs is in "iDrive 8".
   renderer that subscribes gets the scene as it was last flushed, so a
   video writes only the tiles that differ from it. The scenes go at exit,
   and when a target needs a scene id another target's released scene has
-  (`panel` and `hud`).
+  (`hud` and a `panel` that has fallen back to the HUD's id, "Scene ids").
 - **The KOMBI's queue** (VERIFIED on the car, slot 0x100, class 0,
   [dcsm/DCSM.md](dcsm/DCSM.md)):
   - The KOMBI never takes a slot from the content it shows. The first
@@ -117,12 +117,31 @@ cluster is offered, and what differs is in "iDrive 8".
   KOMBI shows it. A parked target stages and flushes nothing. Nobody
   wanting it, it is released at once, with no linger.
 - **Giving way** (contributed by [eroobeeroo](https://github.com/eroobeeroo)).
-  A target with `<target>_yield_slots` (the HUD: `0x322`, where its media
-  and list pop-ups show, VERIFIED on a G05) gives way while the stock HMI
-  shows content there: asking for the target again while a pop-up showed
-  pushed the pop-up from the HUD to the cluster. It is asked for again
+  A target with `<target>_yield_slots` gives way while the stock HMI shows
+  content there: asking for the target again while a pop-up showed pushed
+  the pop-up from the HUD to the cluster. It is asked for again
   `<target>_yield_ms` (1500) after the pop-up goes, and an overlay-only
-  target gives way to stock content parked behind it the same way.
+  target gives way to stock content parked behind it the same way. The
+  HMI puts its other HUD content in two slots (HmiMain3D's
+  `getDisplayClusterParams` and `getSceneID` for the high HUD, VERIFIED in
+  the firmware):
+  - 0x322: its lists, content 0x01000251, class 512: the media source
+    list, playlists, recent calls, apps' HUD lists (VERIFIED on a G05 with
+    the media and list pop-ups). The HUD's yield slot (`hud_yield_slots =
+    0x322`).
+  - 0x321: its pop-ups, content 0x01000600, class 0: incoming and active
+    calls, apps' HUD pop-ups, the xOffroad and M Drift widgets. Not given
+    way to as shipped: an active call's pop-up would keep the HUD map off
+    for the whole call, and the slot is not yet seen on a car.
+    `hud_yield_slots = 0x321,0x322` adds it.
+
+  Route guidance never counts, in any slot: the HMI's roadbook contents
+  (0x01000200, 0x01000201, 0x01000210, 0x01000211 on the HUD; 0x01000300,
+  0x01000301, 0x01000310-0x01000314, 0x01000360 on the cluster, the turn box
+  0x01000310 among them). The HUD's guidance shows in slots of its own
+  (0x330-0x332 on a G05; 0x300 on an X3, which the KOMBI disables while the
+  HUD map holds 0x323). A layer with `yield` 0 (PROTOCOL.md) keeps its
+  target from giving way while it wants it.
 - **The HUD** (iDrive 7, `hud`): slot 0x323 only, the slot the HUD map of
   [eroobeeroo](https://github.com/eroobeeroo) was shown in on a G80 and a
   G05 (VERIFIED there), scene 0x01000400, class 0.
@@ -131,9 +150,9 @@ cluster is offered, and what differs is in "iDrive 8".
     service runs without it and logs why (`target hud left out: …`). It
     never takes a slot from the stock HMI, so BMW's own HUD content (its
     guidance, 0x01000210, in 0x330-0x332) is never unmapped; it gives way
-    to the HUD's pop-ups (below).
-  - Its scene id is `panel`'s: the two are never asked for at once
-    ("Scene ids").
+    to the HUD's lists, never to guidance ("Giving way").
+  - It shows with `panel`, which has a scene id of its own, unless the
+    panel has fallen back to 0x01000400 ("Scene ids").
   - It has the HUD's share of the budget ("Upload budget"): up to half of
     it, only as much as it writes, and nothing it shows the governor moves
     the cap.
@@ -357,19 +376,22 @@ cluster is offered, and what differs is in "iDrive 8".
 - **Mapping guard** (`src/guard.h`). A mapping the KOMBI cannot take can
   make it restart the cluster and the HUD (scene ids 7702 and 7703 did), and
   the service would map it again after every restart and every boot. Only
-  a guide hold and the HUD can be disabled; the map and `panel` only have
-  their strikes logged, and the map's mapping in 0x100 with 0x010004f0, the one
+  a guide hold, the HUD and the panel's own scene id (0x010004f8, "Scene
+  ids") can be disabled; the map and a fallen-back panel only have their
+  strikes logged, and the map's mapping in 0x100 with 0x010004f0, the one
   the car has shown for longest, is never disabled whatever the file says.
   - A mapping event is our request of a target and the display's first
     showing of it after that request. A re-park or re-show the KOMBI makes
     on its own is none.
   - The display service (Dcsm2, or iDrive 8's DCSM) going away within 10 s
-    of a hold's or the HUD's mapping event, held still or released since, is
-    a strike against that mapping (its slot, scene id and class), even when
-    the map had a later event; the map and `panel` are never blamed while
-    such an event is in the window. With a hold's and the HUD's both in it,
-    the latest is struck. With neither, the target with the latest event
-    gets the strike, logged only. A KOMBI restart takes its SOME/IP
+    of a hold's, the HUD's or the panel's own id's mapping event, held still
+    or released since, is a strike against that mapping (its slot, scene id
+    and class), even when the map had a later event; the map and a
+    fallen-back panel are never blamed while such an event is in the
+    window. With more than one of those in it, the latest is struck. The
+    panel's own id disabled, the panel falls back ("Scene ids"). With none
+    of those in it, the target with the latest event gets the strike,
+    logged only. A KOMBI restart takes its SOME/IP
     service, and with it Dcsm2's TCP connection, away (INFERRED;
     CAR-ONLY). A scene removed, a silent heartbeat or a slot table without
     our rows also come from the stock HMI re-mapping its content, a full
@@ -400,9 +422,22 @@ cluster is offered, and what differs is in "iDrive 8".
     cannot be written leaves the guard working from memory until the
     service stops.
 - **Scene ids** come from `scene_ids_allowed`. Ids 7702 and 7703 made the
-  KOMBI restart the cluster and the HUD. Two targets with one id (`panel`
-  and `hud`) are never requested at once; the second's request unpublishes
-  the first's released scene and publishes its own.
+  KOMBI restart the cluster and the HUD. `map` has 0x010004f0, the guide
+  hold 0x010004f1, `hud` 0x01000400 and `panel` 0x010004f8, so all three
+  targets show at once (the panel's id with the HUD shown reported on one
+  car). No
+  stock content has 0x010004f8: neither HmiMain3D nor the KOMBI's
+  firmware names it, and the KOMBI's own scenes are 99 to 201.
+  - **Fallback.** The panel goes to `panel_fallback_scene_id`
+    (0x01000400), logged (`target panel: scene 0x10004f8 refused: …;
+    falling back to 0x1000400 until cluster-render restarts`), when the
+    KOMBI refuses its id as unknown (E_DCSM_CONTENTID_UNKNOWN) or the
+    mapping guard disables it after two strikes; a panel whose id the guard
+    has disabled starts on the fallback. Other refusals, failed fetches and
+    removals are retried on the ladder as for any target.
+  - Two targets with one id (`hud` and a fallen-back `panel`) are never
+    requested at once; the second's request unpublishes the first's
+    released scene and publishes its own.
 - **Our own id in the slot.** A target can be lost while the table still
   names its scene id. That is a report from before the loss, or the stock
   HMI's content with the same id (0x01000400 is also the speech dialog). The
@@ -883,7 +918,12 @@ The host tests:
   ago, or does not name it; the HUD under the guard: a display drop after its
   mapping striking it and not the map, also with the map mapped after it,
   two disabling it and only it, in that boot and the next, wanting it again
-  not undoing that; `panel` and `hud` never asked for at once; the mapping
+  not undoing that; `map`, `panel` and `hud` shown at once with their own
+  scene ids, released and asked for again apart; the panel falling back to
+  the HUD's id when the KOMBI refuses its id as unknown or the guard
+  disables it, and not for other refusals or removals; the HMI's speech
+  dialog in 0x203, on the HUD's id, given way to; and `panel` and
+  `hud` on one id never asked for at once; the mapping
   guard: the hold, released since,
   blamed for the display service going away over a map asked for after it, a re-park and
   re-show by the display no mapping event, a slot refused as unknown a
@@ -1075,7 +1115,8 @@ Not verified, needs the car:
   - the take-overs' 1.5 s pace: five within 6 s;
   - what the HMI does after a take-over in views other than Map view;
   - heartbeat replies: the test unit does not answer heartbeat requests;
-  - 0x01000400 on the panel while the HMI's speech dialog exists;
+  - 0x010004f8 on the panel with the HUD shown, on cars other than one;
+  - 0x01000400 on a fallen-back panel while the HMI's speech dialog exists;
   - how a flush's duration and the heartbeat replies behave as the link
     fills, which sets `slow_flush_ms`;
   - the governor's steps on a real drive;
@@ -1101,8 +1142,8 @@ Not verified, needs the car:
     run it only on a unit that has booted with cluster-render installed;
   - that the KOMBI draws a warm scene asked for again. Once on the car, a
     scene destroyed and published again with the same id within a second
-    was reported mapped and never drawn; `panel` and `hud` handing their
-    shared scene id over still do that.
+    was reported mapped and never drawn; `hud` and a fallen-back `panel`
+    handing their shared scene id over still do that.
 
 On iDrive 8 ("iDrive 8"), verified on the car with icwidget, a test widget
 of ours on the same calls (RAMSES 27 scene, DCSM offer, user 801), as

@@ -223,7 +223,7 @@ bool layer_params(const cr::Json &j, LayerParams *p, std::string *err)
     n.pivot_y = n.pivot_y || j.count("py");
     struct Flag { const char *key; bool *field; } flags[] = {
         {"visible", &n.visible}, {"exclusive", &n.exclusive}, {"prewarm", &n.prewarm}, {"contend", &n.contend},
-        {"guide_hold", &n.guide_hold}};
+        {"guide_hold", &n.guide_hold}, {"yield", &n.yield}};
     for (const Flag &f : flags) {
         v = *f.field ? 1 : 0;
         if (!num(j, f.key, 0, 1, &v, err)) return false;
@@ -1155,9 +1155,10 @@ std::string Server::status_text(int64_t now_ms) const
                     l = x;
             if (!l)
                 continue;
-            std::snprintf(line, sizeof line, "layer %u %s of %s on %s, %s z %d%s: %s%s%s\n", l->id(), l->kind(),
+            std::snprintf(line, sizeof line, "layer %u %s of %s on %s, %s z %d%s%s: %s%s%s\n", l->id(), l->kind(),
                           c.app.c_str(), slots_->targets()[l->target()].name.c_str(), klass_name(l->params.klass),
-                          l->params.z, l->params.guide_hold ? "" : ", guide_hold 0", layer_state_name(st),
+                          l->params.z, l->params.guide_hold ? "" : ", guide_hold 0", l->params.yield ? "" : ", yield 0",
+                          layer_state_name(st),
                           reason.empty() ? "" : " - ", reason.c_str());
             s += line;
             const std::string stats = l->stats();

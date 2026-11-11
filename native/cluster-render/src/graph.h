@@ -162,7 +162,7 @@ public:
      * - the uniform of a quad or a part: 1, 3 or 4 values (float, vec3,
      *   vec4).
      * Returns the animation's handle, 0 when refused. A stopped animation
-     * leaves its property at its last value. */
+     * leaves its property at its last value; dropping its node stops it. */
     virtual int animate(int node, const Animation &a) = 0;
     virtual void stop(int anim) = 0;
 
